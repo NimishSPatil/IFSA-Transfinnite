@@ -1,0 +1,93 @@
+id,label,default,tested,context,outputs_changed
+a01,Passionfruit road transit,3,4,,26
+a02,"Imported dragonfruit lead time, shortest",42,63,,6
+a03,"Imported dragonfruit lead time, longest",56,84,,11
+a04,"Domestic road transit (mango, peach, basil, guava, domestic dragonfruit)",3,4,,88
+a05,"Air freight, booking to arrival",10,15,,9
+a06,Air freight cost vs normal,5,8.0,,7
+a07,Depot-to-depot transfer time,3,4,,5
+a08,Depot-to-depot transfer cost,1.5,2.25,,13
+a09,Extra delay on open sea orders,0,3,,19
+a10,Extra delay on open road orders,0,3,,94
+a11,Flag a lane when on-time deliveries fall below,0.9,1,,25
+a12,Flag a lane when lead time exceeds this share of plant cover,0.5,0.75,,25
+b01,Hypothetical highway closure starts,-1,0,,84
+b02,Length of a closure (planning stress case),21,32,,47
+b03,Summers with a closure of a week or more,3,4,,4
+b04,Guava supplier 1 stops dispatching,0,3,,53
+b05,Guava supplier 1 share of guava,0.6,0.8999999999999999,{'b04': 10},20
+b06,"Mango / peach / basil outage (one input, all three tested)",0,3,,45
+b07,Plant breakdown: capacity lost,0.0,0.15000000000000002,{'b08': 10},178
+b08,Plant breakdown: duration,0,3,{'b07': 0.3},169
+b09,Pulp lost to cold-chain or quality hold,0.0,0.15000000000000002,,197
+b10,"Packaging (bottles, caps, labels) short",0.0,0.15000000000000002,,220
+b11,Demand shock flavor,none,MPB,,238
+b12,Demand shock size (quick commerce),4.0,6.0,{'b11': 'DP'},221
+b13,Demand shock starts,0,3,{'b11': 'DP'},175
+b14,Import price / FX change,0.0,0.15000000000000002,,10
+c01,Guava supplier 2 confirmed extra capacity,0,300,{'b04': 10},15
+c02,Guava supplier 2 earliest extra dispatch,3,4,"{'b04': 10, 'c01': 3000}",5
+c03,Domestic dragonfruit confirmed extra capacity,0,300,,15
+c04,Air freight capacity,4700,7050,,8
+c05,Passionfruit cooperative confirmed surge capacity,0,300,,18
+c06,Alternate mango/peach/basil processor confirmed capacity,0.0,0.15000000000000002,{'b06': 20},50
+d01,Pulp per bottle,0.06,0.09,,207
+d02,Mango share in Mango Peach Basil,0.55,0.8250000000000001,,77
+d03,Peach share in Mango Peach Basil,0.35,0.5249999999999999,,76
+d04,Passionfruit share in Dragon Passion,0.5,0.75,,90
+d05,Average price,60,90,,7
+d06,Contribution margin,0.32,0.48,,7
+d07,Co-packer cost premium,0.25,0.375,,4
+d08,Co-packer volume cap,0.1,0.15000000000000002,,16
+d09,Co-packer notice,14,21,,16
+d10,Normal freight cost of passionfruit,0,3,,9
+d11,Dragonfruit domestic share of supply (sourcing mix),0.6,0.8999999999999999,,32
+d12,Share of unmet MPB / GC buyers who would take another flavor,0.0,0.15000000000000002,{'b06': 20},10
+d13,Passionfruit Punch cut in the 'case response' option,0.9,1,,2
+e01,Combined plant capacity,2.5,3.75,,213
+e02,Usable share of plant capacity,1.0,0.5,,231
+e03,Plant pulp cover target (procurement),15.6,23.4,,10
+f01,"Forecast error, flavor x depot",0.3,0.44999999999999996,,5
+f02,"Forecast error, national flavor",0.15,0.22499999999999998,,16
+f03,Percentile for pulp (long lead),80,95,,17
+f04,Percentile for finished goods,50,75,,137
+f05,Weight on recent run-rate vs last year's shape,0.6,0.8999999999999999,,224
+f06,Weeks of run-rate used for the level,6,9,,220
+f07,Censored weeks,orders,impute,,232
+f08,Detector: EWMA weight,0.3,0.44999999999999996,,13
+f09,Detector: alert when EWMA ratio above,1.5,2.25,{'f11': 10},15
+f10,Detector: CUSUM slack,0.15,0.22499999999999998,,5
+f11,Detector: CUSUM alarm level,1.5,2.25,,15
+f12,Detector: consecutive days needed,2,3,,12
+f13,Detector: minimum baseline volume,500,20000,,15
+f14,Detector: baseline window,28,42,,6
+f15,Launch-ramp window,28,7,,6
+f16,Breadth for a viral burst,0.6,0.1,,3
+f17,Persistence: decay half-life,21,90,,3
+f18,Persistence: fade half-life,7,2,,3
+f19,Depot share: recency half-life,4,6,,24
+f20,Depot share: shrinkage k,4,6,,24
+f21,Dragon Passion launch allocation (before data),0.03,0.045,,32
+f22,Marketing notice of launches to procurement,14,21,,5
+f23,Year-on-year growth for the baseline,0.15,0.22499999999999998,,211
+f26,Detector: remove last year's seasonal rise,yes,no,,31
+f24,Social: velocity alert,3.0,8.0,,2
+f25,Social: minimum mentions per day,30,400,,1
+f27,Social: macro + mega share for an influencer burst,0.15,0.22499999999999998,,2
+g01,Bottle shelf life,90,135,,26
+g02,MT / QC minimum days left,60,90,,34
+g03,Frozen pulp shelf life,180,30,,5
+g04,Depot cover target,21,32,,17
+g05,Pulp safety buffer,3,4,,137
+g06,Planning horizon for the material balance,56,84,,134
+g07,Minimum service level for any flavor in an allocation,0.0,0.15000000000000002,,2
+g08,"Finished-goods lag, plant to depot shelf",7,10,,1
+f28,Forecast for inventory views,file,dashboard,,19
+f29,Flag a forecast difference above,0.25,0.5,,6
+h01,Loss per bottle below P50,15.36,23.04,,1
+h02,Extra loss per bottle below P80,3.84,5.76,,1
+h03,Overstock threshold,35,52,,11
+h04,Minimum transfer,10000,locked,,locked
+h05,Write-off rate on bottles past the saleable window,0,2.0,,1
+h06,Sender floor (cover kept after a transfer),16.25,locked,,locked
+h07,Receiver trigger / top-up,16.0,locked,,locked

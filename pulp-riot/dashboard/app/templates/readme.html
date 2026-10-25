@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}READ_ME · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() %}
+
+<h1>READ_ME</h1>
+<p class="sub">Everything worth a planner's attention as of {{ known_by.strftime('%a %d %b %Y') }}, filled in automatically from the risk engine, decisions, alerts,
+  the control panel and data checks. Immediate = within 7 days or happening now; Soon = within 28 days; Later = structural, data gaps and next steps.</p>
+{{ ui.scen_banner() }}
+
+<div class="stats">
+  {% set c = rm_counts %}
+  <div class="stat {% if c.Immediate %}alert{% endif %}"><div class="v">{{ c.Immediate }}</div><div class="k">Immediate</div></div>
+  <div class="stat {% if c.Soon %}warn{% endif %}"><div class="v">{{ c.Soon }}</div><div class="k">Soon</div></div>
+  <div class="stat"><div class="v">{{ c.Later }}</div><div class="k">Later</div></div>
+  <div class="stat"><div class="v">{{ all_rows|selectattr('rec_id')|selectattr('status', 'equalto', 'Pending')|list|length }}</div><div class="k">Decisions pending</div></div>
+</div>
+
+<div class="chips" style="margin-bottom:6px">
+  <a class="chip {% if grp == 'all' %}on{% endif %}" href="{{ q }}">All · {{ all_rows|length }}</a>
+  {% for g in groups %}<a class="chip {% if grp == g %}on{% endif %}" href="{{ q }}&grp={{ g|urlencode }}">{{ g }} · {{ all_rows|selectattr('group', 'equalto', g)|list|length }}</a>{% endfor %}
+</div>
+
+{% for b in ['Immediate', 'Soon', 'Later'] %}
+  {% set items = rows|selectattr('bucket', 'equalto', b)|list %}
+  <div class="rm-bucket">{{ b }} <span class="n">{{ items|length }}</span></div>
+  {% for x in items %}
+    <div class="rm-item {{ x.severity }}">
+      <div class="flexrow" style="flex-wrap:wrap;align-items:flex-start">
+        <a class="t grow" href="{{ x.link.split('#')[0] }}{{ q }}{% if '#' in x.link %}#{{ x.link.split('#')[1] }}{% endif %}" style="color:inherit">{{ x.title }}</a>
+        {{ ui.status(x.severity) }} {{ ui.status(x.status) }}
+      </div>
+      <div class="small">{{ x.detail }}</div>
+      <div class="meta"><span>{{ x.group }}</span>·<span>{{ x.source }}</span>·<span>owner {{ x.owner }}</span>{% if x.simulated %}·{{ ui.src('Simulated') }}{% endif %}</div>
+    </div>
+  {% else %}<div class="small muted" style="margin-bottom:8px">Nothing here.</div>{% endfor %}
+{% endfor %}
+{% endblock %}

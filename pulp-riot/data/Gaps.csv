@@ -1,0 +1,25 @@
+﻿gap_id,what_the_case_does_not_say,module,assumption_id
+G01,Which plant makes which flavor,Supply,A01
+G02,"Which plants ship to which depots; transport mode, lead time and cost plant-to-depot",Distribution,A02
+G03,"Depot names, which depot sits in which region, and each depot's volume",Distribution,A03
+G04,Import mode and route for dragonfruit; whether the 6-8 week lead time applies to the imported 40% only,Transportation,A04
+G05,"Passionfruit and dragonfruit share inside Dragon Passion, and its domestic/imported dragonfruit split",Supply,A05
+G06,"Ingredient shares in Mango Peach Basil, and the split between the two guava suppliers",Supply,A06
+G07,"Lead time and mode from the mango, peach, basil, guava and domestic dragonfruit suppliers to the plants",Transportation,A07
+G08,Passionfruit pulp volume per month (kg) and plant cold-storage capacity,Inventory,A08
+G09,"Exact dates: May closure start, air-freight arrival, stock-out start/end",Transportation,A09
+G10,Monthly split of the 9.6 crore summer bottles (March to June),Demand,A10
+G11,Flavor x channel x depot split of volume,Demand,A11
+G12,"Co-packer location, flavors it can make, and what 'up to 10% volume' is 10% of",Supply,A12
+G13,No stated flow carrying the daily quick-commerce signal from Marketing to Planning (information gap),Demand,A13
+G14,Which functions attend the monthly S&OP meeting,General,A14
+G15,Calendar year of 'last summer',General,A15
+G16,Air-freight transit time and the delay from booking to arrival,Transportation,A16
+G17,How the 8% lost revenue and the INR 3.2 crore / INR 6 crore costs split across flavors and channels,General,A17
+G18,Whether '600 distributors' includes modern-trade and quick-commerce accounts,Distribution,A18
+G19,Whether the co-packer was used last summer,Supply,A19
+G20,How long the quick-commerce 4x level lasted after the two-week rise,Demand,A20
+G21,"What depot plan share Dragon Passion got, given depot cover follows the previous year's mix",Inventory,A22
+G22,"Passionfruit pulp cover outside the closure window, and how fast it rebuilt after",Inventory,A23
+G23,"How daily sales moved during the stock-out windows, and how pulp running out at the plants on 25 May translated into empty depots given ~3 weeks of finished cover at depots",Demand,A21
+G24,"Which regions or depots were overstocked with Mango Peach Basil and Guava Chilli, and which were short",Inventory,A24

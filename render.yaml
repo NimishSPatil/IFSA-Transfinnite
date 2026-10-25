@@ -1,0 +1,14 @@
+# Render blueprint for the PulpSense dashboard (FastAPI). Lives at the repo root.
+# The app reads pulp-riot/data from inside pulp-riot/dashboard, so build and start run from the repo root rather than rootDir.
+services:
+  - type: web
+    name: pulpsense
+    runtime: python
+    plan: free
+    buildCommand: pip install -r pulp-riot/dashboard/requirements.txt
+    startCommand: cd pulp-riot/dashboard && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /data
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7

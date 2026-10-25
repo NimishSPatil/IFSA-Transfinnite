@@ -1,0 +1,25 @@
+﻿assumption_id,gap_id,assumption,reason
+A01,G01,Both plants and the co-packer can make all five flavors,Case never limits a flavor to a plant; 'two plants make 2.5 crore bottles a month' is stated as one pool
+A02,G02,"Both plants and the co-packer can ship to every depot, by road; lead time and cost left blank",Case says it 'ships to nine depots' without restricting origin; blank rather than invented
+A03,G03,"Regions are North, South, East, West; depots split 2/2/2/3 (West has 3). Generic names, no real cities",Case gives 9 depots in 4 regions and nothing else; generic names avoid outside facts
+A04,G04,Imported dragonfruit travels by sea; the 6-8 week lead time applies to the imported share,Brief calls it 'import shipping'; the case attaches the lead time to the imported pulp
+A05,G05,Dragon Passion pulp split is left blank until modelled; needed before the passionfruit cover calculation,Case says 'both' only
+A06,G06,Guava split between the two suppliers assumed 50/50; Mango Peach Basil ingredient shares left blank,No figure in case; equal split is the neutral choice
+A07,G07,Those supply edges exist (case names the sources) but lead time and mode are left blank,Not stated; blank rather than invented
+A08,G08,"Passionfruit cover is tracked in days of cover (14 days at closure start), not kilograms",Case gives cover in weeks only
+A09,G09,Closure assumed to run 11 May to 31 May 2026 (21 days); pulp cover reaches zero on 25 May,"Case says 'May', three weeks, ~2 weeks of cover; 11 May is our pick within May"
+A10,G10,"Summer volume split evenly, 2.4 crore bottles a month (March to June)","9.6 / 4 months; also 96% of the 2.5 crore plant capacity, close to the stated 95%"
+A11,G11,Channel and flavor mixes are the same at every depot; all depots equal weight (1/9) before the spike is overlaid,No depot-level data in the case
+A12,G12,"Co-packer capacity = 10% of plant capacity = 0.25 crore bottles/month, all flavors",Case says 'up to 10% volume'; we read it as 10% of plant volume
+A13,G13,No Marketing-to-Planning edge is created; the missing flow is itself a risk flag,Case says only that QC reports go to marketing and that planners see data at month-end
+A14,G14,Only Planning and the COO are drawn at S&OP,Case names the meeting and the COO escalation; other attendees not stated
+A15,G15,"'Last summer' is calendar year 2026, used only to order dates","Case gives months, not a year"
+A16,G16,Air-freight lead time left blank; the 2nd-week booking delay is stored as a note,"Case gives booking week and cost multiple, not transit time"
+A17,G17,Loss ledger holds only the three given figures; attribution to causes is a later step,Avoids baking an unproven split into the data
+A18,G18,600 is treated as the approximate downstream account count and not used in calculations,Wording is ambiguous
+A19,G19,"Co-packer shown as available capacity, not as last summer's actual flow",Case does not say it was used
+A20,G20,The 4x quick-commerce level for Dragon Passion is held until 30 June in the sample data,"Case gives the rise, not the decay; holding keeps the stress case visible"
+A21,G23,"Sample sales of Passionfruit Punch and Dragon Passion run at 30% of normal from 25 May to 14 Jun, with depot stock at zero for both (pulp gone until supply rebuilt)",Case says both ran out; the size of the dip is ours. Flavor and channel totals are still held to the Given shares
+A22,G21,Depot plan mix gives Dragon Passion 5% and scales the other four flavors up to 95%,"Case says cover follows the previous year's mix, which predates the launch; any non-zero share is our assumption"
+A23,G22,"Plant passionfruit cover is 14 days before the closure, falls 1 day per day to 0 on 25 May, stays 0 to 31 May, and rebuilds linearly to 14 days by 14 Jun",Case gives only the 2 weeks at closure start; the rest follows from it
+A24,G24,"The baseline keeps depots equal, so it shows the Dragon Passion shortage but NOT the regional overstock/shortage of Mango Peach Basil and Guava Chilli; that imbalance is introduced as a scenario parameter in the replay",Case says it happened (F60) but gives no depot detail; inventing a split here would bake an unproven pattern into the data

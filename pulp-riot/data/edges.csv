@@ -1,0 +1,180 @@
+﻿edge_id,from_node,to_node,flow_type,mode,lead_time_days_min,lead_time_days_max,cost_per_unit,cost_multiple,volume_share,alternative_route_exists,frequency,reporting_lag_days,disruption_history,data_source,case_fact_id,gap_id,notes
+E001,S_PASSION,P1,goods,road,3,3,,1,,N,,,closed >=1 week in 3 of last 5 summers,Given,F40;F41;F42,,Only highway; no alternative road route
+E002,S_PASSION,P2,goods,road,3,3,,1,,N,,,closed >=1 week in 3 of last 5 summers,Given,F40;F41;F42,,Only highway; no alternative road route
+E003,S_PASSION,P1,goods,air,,,,5,,Y,contingency,,,Given,F44;F56;F57,G16,Contingency only. 5x normal cost; booked in 2nd week of closure; transit time not stated
+E004,S_PASSION,P2,goods,air,,,,5,,Y,contingency,,,Given,F44;F56;F57,G16,Contingency only. 5x normal cost; booked in 2nd week of closure; transit time not stated
+E005,S_DRAGON_IMP,P1,goods,sea,42,56,,,,unknown,quarterly,,,Assumed,F15;F16;F17,G04,Lead time 6-8 weeks and quarterly ordering are Given; sea mode is Assumed
+E006,S_DRAGON_IMP,P2,goods,sea,42,56,,,,unknown,quarterly,,,Assumed,F15;F16;F17,G04,Lead time 6-8 weeks and quarterly ordering are Given; sea mode is Assumed
+E007,S_MANGO,P1,goods,road,,,,,,unknown,,,,Assumed,F73,G07,Edge exists per case; mode and lead time not stated
+E008,S_MANGO,P2,goods,road,,,,,,unknown,,,,Assumed,F73,G07,Edge exists per case; mode and lead time not stated
+E009,S_PEACH,P1,goods,road,,,,,,unknown,,,,Assumed,F74,G07,Edge exists per case; mode and lead time not stated
+E010,S_PEACH,P2,goods,road,,,,,,unknown,,,,Assumed,F74,G07,Edge exists per case; mode and lead time not stated
+E011,S_BASIL,P1,goods,road,,,,,,unknown,,,,Assumed,F75,G07,Edge exists per case; mode and lead time not stated
+E012,S_BASIL,P2,goods,road,,,,,,unknown,,,,Assumed,F75,G07,Edge exists per case; mode and lead time not stated
+E013,S_GUAVA1,P1,goods,road,,,,,,unknown,,,,Assumed,F76,G07,Edge exists per case; mode and lead time not stated
+E014,S_GUAVA1,P2,goods,road,,,,,,unknown,,,,Assumed,F76,G07,Edge exists per case; mode and lead time not stated
+E015,S_GUAVA2,P1,goods,road,,,,,,unknown,,,,Assumed,F76,G07,Edge exists per case; mode and lead time not stated
+E016,S_GUAVA2,P2,goods,road,,,,,,unknown,,,,Assumed,F76,G07,Edge exists per case; mode and lead time not stated
+E017,S_DRAGON_DOM,P1,goods,road,,,,,,unknown,,,,Assumed,F14,G07,Edge exists per case; mode and lead time not stated
+E018,S_DRAGON_DOM,P2,goods,road,,,,,,unknown,,,,Assumed,F14,G07,Edge exists per case; mode and lead time not stated
+E019,P1,D_N1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E020,P1,D_N2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E021,P1,D_S1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E022,P1,D_S2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E023,P1,D_E1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E024,P1,D_E2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E025,P1,D_W1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E026,P1,D_W2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E027,P1,D_W3,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E028,P2,D_N1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E029,P2,D_N2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E030,P2,D_S1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E031,P2,D_S2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E032,P2,D_E1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E033,P2,D_E2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E034,P2,D_W1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E035,P2,D_W2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E036,P2,D_W3,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E037,CP,D_N1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E038,CP,D_N2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E039,CP,D_S1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E040,CP,D_S2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E041,CP,D_E1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E042,CP,D_E2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E043,CP,D_W1,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E044,CP,D_W2,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E045,CP,D_W3,goods,road,,,,,,Y,,,,Assumed,F05,G02,"Plant-to-depot allocation, mode and lead time not stated"
+E046,D_N1,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E047,D_N1,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E048,D_N1,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E049,D_N2,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E050,D_N2,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E051,D_N2,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E052,D_S1,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E053,D_S1,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E054,D_S1,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E055,D_S2,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E056,D_S2,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E057,D_S2,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E058,D_E1,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E059,D_E1,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E060,D_E1,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E061,D_E2,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E062,D_E2,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E063,D_E2,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E064,D_W1,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E065,D_W1,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E066,D_W1,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E067,D_W2,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E068,D_W2,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E069,D_W2,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E070,D_W3,C_GT,goods,road,,,,,0.55,unknown,,,,Assumed,F23,G11,Channel share is Given overall; applied equally at each depot
+E071,D_W3,C_MT,goods,road,,,,,0.25,unknown,,,,Assumed,F24,G11,Channel share is Given overall; applied equally at each depot
+E072,D_W3,C_QC,goods,road,,,,,0.2,unknown,,,,Assumed,F25,G11,Channel share is Given overall; applied equally at each depot
+E073,D_N1,D_N2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E074,D_N1,D_S1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E075,D_N1,D_S2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E076,D_N1,D_E1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E077,D_N1,D_E2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E078,D_N1,D_W1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E079,D_N1,D_W2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E080,D_N1,D_W3,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E081,D_N2,D_N1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E082,D_N2,D_S1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E083,D_N2,D_S2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E084,D_N2,D_E1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E085,D_N2,D_E2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E086,D_N2,D_W1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E087,D_N2,D_W2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E088,D_N2,D_W3,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E089,D_S1,D_N1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E090,D_S1,D_N2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E091,D_S1,D_S2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E092,D_S1,D_E1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E093,D_S1,D_E2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E094,D_S1,D_W1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E095,D_S1,D_W2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E096,D_S1,D_W3,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E097,D_S2,D_N1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E098,D_S2,D_N2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E099,D_S2,D_S1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E100,D_S2,D_E1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E101,D_S2,D_E2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E102,D_S2,D_W1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E103,D_S2,D_W2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E104,D_S2,D_W3,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E105,D_E1,D_N1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E106,D_E1,D_N2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E107,D_E1,D_S1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E108,D_E1,D_S2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E109,D_E1,D_E2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E110,D_E1,D_W1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E111,D_E1,D_W2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E112,D_E1,D_W3,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E113,D_E2,D_N1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E114,D_E2,D_N2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E115,D_E2,D_S1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E116,D_E2,D_S2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E117,D_E2,D_E1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E118,D_E2,D_W1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E119,D_E2,D_W2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E120,D_E2,D_W3,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E121,D_W1,D_N1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E122,D_W1,D_N2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E123,D_W1,D_S1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E124,D_W1,D_S2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E125,D_W1,D_E1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E126,D_W1,D_E2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E127,D_W1,D_W2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E128,D_W1,D_W3,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E129,D_W2,D_N1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E130,D_W2,D_N2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E131,D_W2,D_S1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E132,D_W2,D_S2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E133,D_W2,D_E1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E134,D_W2,D_E2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E135,D_W2,D_W1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E136,D_W2,D_W3,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E137,D_W3,D_N1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E138,D_W3,D_N2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E139,D_W3,D_S1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E140,D_W3,D_S2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E141,D_W3,D_E1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E142,D_W3,D_E2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E143,D_W3,D_W1,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E144,D_W3,D_W2,transfer,road,2,4,1.5,,,Y,,,,Given,F49;F50,,"2-4 days, about INR 1.50 per bottle"
+E145,C_QC,X_MKT,information,digital,,,,,,,daily,1,,Given,F29,,Daily sell-through reports. Lag of 1 day is Derived from 'daily'
+E146,C_GT,X_PLAN,information,manual,,,,,,,monthly,30,,Derived,F30,,Consolidated sales reach planners at month-end; up to ~30 days old (Derived)
+E147,C_MT,X_PLAN,information,manual,,,,,,,monthly,30,,Derived,F30,,Consolidated sales reach planners at month-end; up to ~30 days old (Derived)
+E148,C_QC,X_PLAN,information,manual,,,,,,,monthly,30,,Derived,F30,,Consolidated sales reach planners at month-end; up to ~30 days old (Derived)
+E149,D_N1,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E150,D_N2,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E151,D_S1,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E152,D_S2,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E153,D_E1,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E154,D_E2,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E155,D_W1,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E156,D_W2,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E157,D_W3,X_PLAN,information,manual,,,,,,,weekly,7,,Given,F48,,Each depot's own spreadsheet; up to 7 days old (Derived from 'weekly')
+E158,X_PLAN,D_N1,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E159,X_PLAN,D_N2,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E160,X_PLAN,D_S1,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E161,X_PLAN,D_S2,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E162,X_PLAN,D_E1,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E163,X_PLAN,D_E2,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E164,X_PLAN,D_W1,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E165,X_PLAN,D_W2,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E166,X_PLAN,D_W3,information,manual,,,,,,,monthly,,,Given,F47;F46,,Allocation reset monthly using the previous year's flavor mix
+E167,X_MKT,X_PROC,information,manual,14,14,,,,,one-off,,,Given,F36,,Dragon Passion launch notice: 2 weeks before launch
+E168,X_PLAN,X_PROC,information,manual,,,,,,,monthly,,,Assumed,F27,,Monthly forecast assumed to reach procurement; case does not state the link
+E169,X_PROC,S_MANGO,information,manual,,,,,,,,,,Assumed,F34,G07,Orders. Imported dragonfruit ordered once a quarter; other order cycles not stated
+E170,X_PROC,S_PEACH,information,manual,,,,,,,,,,Assumed,F34,G07,Orders. Imported dragonfruit ordered once a quarter; other order cycles not stated
+E171,X_PROC,S_BASIL,information,manual,,,,,,,,,,Assumed,F34,G07,Orders. Imported dragonfruit ordered once a quarter; other order cycles not stated
+E172,X_PROC,S_GUAVA1,information,manual,,,,,,,,,,Assumed,F34,G07,Orders. Imported dragonfruit ordered once a quarter; other order cycles not stated
+E173,X_PROC,S_GUAVA2,information,manual,,,,,,,,,,Assumed,F34,G07,Orders. Imported dragonfruit ordered once a quarter; other order cycles not stated
+E174,X_PROC,S_PASSION,information,manual,,,,,,,,,,Assumed,F34,G07,Orders. Imported dragonfruit ordered once a quarter; other order cycles not stated
+E175,X_PROC,S_DRAGON_DOM,information,manual,,,,,,,,,,Assumed,F34,G07,Orders. Imported dragonfruit ordered once a quarter; other order cycles not stated
+E176,X_PROC,S_DRAGON_IMP,information,manual,,,,,,,quarterly,,,Given,F17,,Orders. Imported dragonfruit ordered once a quarter; other order cycles not stated
+E177,X_PLAN,CP,information,manual,14,14,,,,,as needed,,,Given,F22,,Co-packer needs 2 weeks' notice
+E178,X_PLAN,X_COO,information,manual,,,,,,,monthly,,,Given,F67;F68,,Monthly S&OP; peak-season trade-offs escalated to the COO
+E179,X_COO,X_PLAN,information,manual,,,,,,,as needed,,,Given,F67,,COO decisions on escalated trade-offs

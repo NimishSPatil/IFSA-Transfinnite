@@ -1,0 +1,11 @@
+﻿flavor_id,ingredient,source_node,share_of_input,data_source,case_fact_id,gap_id
+MPB,mango pulp,S_MANGO,,Given,F73,G06
+MPB,peach pulp,S_PEACH,,Given,F74,G06
+MPB,fresh basil (extract pressed on site),S_BASIL,,Given,F75,G06
+GC,guava pulp,S_GUAVA1,0.5,Assumed,F76,G06
+GC,guava pulp,S_GUAVA2,0.5,Assumed,F76,G06
+PP,passionfruit pulp,S_PASSION,1.0,Given,F77,
+DB,dragonfruit pulp - domestic,S_DRAGON_DOM,0.6,Given,F14,
+DB,dragonfruit pulp - imported,S_DRAGON_IMP,0.4,Given,F15,
+DP,dragonfruit pulp,S_DRAGON_DOM;S_DRAGON_IMP,,Given,F78,G05
+DP,passionfruit pulp,S_PASSION,,Given,F78,G05

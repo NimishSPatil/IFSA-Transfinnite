@@ -1,0 +1,93 @@
+id,group,label,unit,default,min,max,source,reference,note
+A01,Transit and lead times,Passionfruit road transit,days,3,1,10,Given,F40,
+A02,Transit and lead times,"Imported dragonfruit lead time, shortest",days,42,28,90,Given,F16,6 weeks
+A03,Transit and lead times,"Imported dragonfruit lead time, longest",days,56,28,120,Given,F16,8 weeks
+A04,Transit and lead times,"Domestic road transit (mango, peach, basil, guava, domestic dragonfruit)",days,3,1,10,Assumed,G07 / A07,
+A05,Transit and lead times,"Air freight, booking to arrival",days,10,1,21,Derived,G16 / sample,"case gives no air transit time (G16); the sample's airlift was booked 18 May, landed 28 May (F44: 2nd week)"
+A06,Transit and lead times,Air freight cost vs normal,x,5,1,10,Given,F57,
+A07,Transit and lead times,Depot-to-depot transfer time,days,3,2,4,Given,F49,case range 2-4 days
+A08,Transit and lead times,Depot-to-depot transfer cost,INR/bottle,1.5,0,10,Given,F50,
+A09,Transit and lead times,Extra delay on open sea orders,days,0,0,60,Assumed,A25,scenario lever; 0 = as promised
+A10,Transit and lead times,Extra delay on open road orders,days,0,0,30,Assumed,A25,scenario lever; 0 = as promised
+A11,Transit and lead times,Flag a lane when on-time deliveries fall below,share,0.9,0.5,1,Assumed,A47,
+A12,Transit and lead times,Flag a lane when lead time exceeds this share of plant cover,share,0.5,0.1,2,Assumed,A47,
+B01,Disruptions (scenario inputs),Hypothetical highway closure starts,days after as-of,-1,-1,120,Assumed,A26,-1 = no hypothetical closure. A closure already under way in the data is always used.
+B02,Disruptions (scenario inputs),Length of a closure (planning stress case),days,21,0,60,Given,F55,"Used for any closure whose end is not yet known, and for the hypothetical one."
+B03,Disruptions (scenario inputs),Summers with a closure of a week or more,of 5,3,0,5,Given,F42,
+B04,Disruptions (scenario inputs),Guava supplier 1 stops dispatching,days,0,0,60,Assumed,R04 scenario,
+B05,Disruptions (scenario inputs),Guava supplier 1 share of guava,share,0.6,0,1,Assumed,G06 / A06,split between the two guava suppliers is not in the case
+B06,Disruptions (scenario inputs),"Mango / peach / basil outage (one input, all three tested)",days,0,0,60,Assumed,R01-R03 scenario,
+B07,Disruptions (scenario inputs),Plant breakdown: capacity lost,share,0.0,0,1,Assumed,R22 / G27,
+B08,Disruptions (scenario inputs),Plant breakdown: duration,days,0,0,60,Assumed,R22 / G27,
+B09,Disruptions (scenario inputs),Pulp lost to cold-chain or quality hold,share of on-hand,0.0,0,1,Assumed,"R20, R21 / G26",
+B10,Disruptions (scenario inputs),"Packaging (bottles, caps, labels) short",share of capacity,0.0,0,1,Assumed,R19 / G25,
+B11,Disruptions (scenario inputs),Demand shock flavor,flavor,none,none/MPB/GC/PP/DB/DP,,Assumed,A27,scenario lever for the viral-spike replay
+B12,Disruptions (scenario inputs),Demand shock size (quick commerce),x,4.0,1,10,Given,F53,case: orders rose 4x
+B13,Disruptions (scenario inputs),Demand shock starts,days after as-of,0,0,120,Assumed,A27,
+B14,Disruptions (scenario inputs),Import price / FX change,share,0.0,-0.5,1,Assumed,R23 / G28,
+C01,Supplier capacity,Guava supplier 2 confirmed extra capacity,kg/day,0,0,20000,Assumed,G29,0 until the supplier confirms a figure
+C02,Supplier capacity,Guava supplier 2 earliest extra dispatch,days after request,3,0,30,Assumed,G29,
+C03,Supplier capacity,Domestic dragonfruit confirmed extra capacity,kg/day,0,0,20000,Assumed,G30,"60% is a sourcing mix (F14), not a capacity ceiling; 0 until confirmed"
+C04,Supplier capacity,Air freight capacity,kg/day,4700,0,20000,Assumed,G16 / A28,"not in the case; the sample airlifted 66 t over the closure's last two weeks, about 4.7 t/day"
+C05,Supplier capacity,Passionfruit cooperative confirmed surge capacity,kg/day,0,0,20000,Assumed,G31,pre-season surge for pre-building; 0 until confirmed
+C06,Supplier capacity,Alternate mango/peach/basil processor confirmed capacity,share of need,0.0,0,1,Assumed,G32,
+D01,Recipe and cost,Pulp per bottle,kg,0.06,0.02,0.2,Assumed,A05 / A06,sku.csv
+D02,Recipe and cost,Mango share in Mango Peach Basil,share,0.55,0,1,Assumed,G06 / A06,
+D03,Recipe and cost,Peach share in Mango Peach Basil,share,0.35,0,1,Assumed,G06 / A06,
+D04,Recipe and cost,Passionfruit share in Dragon Passion,share,0.5,0,1,Assumed,G05 / A05,basil = 1 - mango - peach; dragonfruit = 1 - passionfruit
+D05,Recipe and cost,Average price,INR/bottle,60,30,120,Given,F26,
+D06,Recipe and cost,Contribution margin,share,0.32,0,0.8,Given,F02,uniform proxy across flavors; not a validated per-flavor margin
+D07,Recipe and cost,Co-packer cost premium,share of unit cost,0.25,0,1,Given,F21,
+D08,Recipe and cost,Co-packer volume cap,share of plant volume,0.1,0,0.5,Given,F20,
+D09,Recipe and cost,Co-packer notice,days,14,0,60,Given,F22,
+D10,Recipe and cost,Normal freight cost of passionfruit,INR/kg,0,0,500,Derived,"F56, F57 + sample",0 = derive from the sample's 2026 air spend / 5x / kg airlifted
+D11,Recipe and cost,Dragonfruit domestic share of supply (sourcing mix),share,0.6,0,1,Given,F14,
+D12,Recipe and cost,Share of unmet MPB / GC buyers who would take another flavor,share,0.0,0,1,Assumed,A45,hypothesis only: no substitution data exists. 0 = no switching assumed
+D13,Recipe and cost,Passionfruit Punch cut in the 'case response' option,share,0.9,0,1,Assumed,F58 / A46,the case says PP was cut (F58); the size is the sample's assumption
+E01,Production,Combined plant capacity,crore bottles/month,2.5,1,5,Given,F32,
+E02,Production,Usable share of plant capacity,share,1.0,0.5,1,Assumed,F33,case reports ~95% utilisation; 100% = theoretical max
+E03,Production,Plant pulp cover target (procurement),days,15.6,5,60,Derived,F43 + sample,the sample's calibrated target; gives 14 days on 11 May (F43)
+F01,"Demand, forecast and signals","Forecast error, flavor x depot",MAPE,0.3,0.05,0.8,Given,F28,
+F02,"Demand, forecast and signals","Forecast error, national flavor",MAPE,0.15,0.03,0.6,Assumed,A29,depot errors are not independent; test 10/15/20%
+F03,"Demand, forecast and signals",Percentile for pulp (long lead),P,80,50,95,Assumed,A30,spec: P80-P90
+F04,"Demand, forecast and signals",Percentile for finished goods,P,50,50,95,Assumed,A30,spec: P50-P60
+F05,"Demand, forecast and signals",Weight on recent run-rate vs last year's shape,share,0.6,0,1,Assumed,A31,
+F06,"Demand, forecast and signals",Weeks of run-rate used for the level,weeks,6,2,13,Assumed,A31,
+F07,"Demand, forecast and signals",Censored weeks,method,orders,orders/impute/exclude,,Assumed,A32,orders = use units ordered; impute = pre-stock-out run-rate; exclude = drop
+F08,"Demand, forecast and signals",Detector: EWMA weight,lambda,0.3,0.05,1,Assumed,A33,
+F09,"Demand, forecast and signals",Detector: alert when EWMA ratio above,x baseline,1.5,1.05,4,Assumed,A33,
+F10,"Demand, forecast and signals",Detector: CUSUM slack,ratio,0.15,0,1,Assumed,A33,
+F11,"Demand, forecast and signals",Detector: CUSUM alarm level,ratio-days,1.5,0.2,10,Assumed,A33,
+F12,"Demand, forecast and signals",Detector: consecutive days needed,days,2,1,7,Assumed,A33,spec starts at 2
+F13,"Demand, forecast and signals",Detector: minimum baseline volume,bottles/day,500,0,20000,Assumed,A33,
+F14,"Demand, forecast and signals",Detector: baseline window,days,28,7,56,Assumed,A33,
+F15,"Demand, forecast and signals",Launch-ramp window,days,28,0,90,Assumed,A34,
+F16,"Demand, forecast and signals",Breadth for a viral burst,share of depots,0.6,0.1,1,Assumed,A34,
+F17,"Demand, forecast and signals",Persistence: decay half-life,days,21,3,120,Assumed,G20 / A20,
+F18,"Demand, forecast and signals",Persistence: fade half-life,days,7,1,60,Assumed,G20 / A20,
+F19,"Demand, forecast and signals",Depot share: recency half-life,weeks,4,1,26,Assumed,A35,
+F20,"Demand, forecast and signals",Depot share: shrinkage k,weeks,4,0,26,Assumed,A35,pulls thin depots to their region
+F21,"Demand, forecast and signals",Dragon Passion launch allocation (before data),share of volume,0.03,0,0.3,Assumed,G21 / A22,
+F22,"Demand, forecast and signals",Marketing notice of launches to procurement,days,14,0,90,Given,F36,
+F23,"Demand, forecast and signals",Year-on-year growth for the baseline,share,0.15,-0.2,0.6,Assumed,A40,user decision: growth slowing to 15%
+F26,"Demand, forecast and signals",Detector: remove last year's seasonal rise,method,yes,yes/no,,Assumed,A33,compares each day's rise with the same day last year; see decision table
+F24,"Demand, forecast and signals",Social: velocity alert,x baseline,3.0,1.2,10,Assumed,A36,simulated feed only
+F25,"Demand, forecast and signals",Social: minimum mentions per day,mentions,30,1,1000,Assumed,A36,
+F27,"Demand, forecast and signals",Social: macro + mega share for an influencer burst,share,0.15,0.01,1,Assumed,A36,
+G01,"Inventory, shelf life and buffers",Bottle shelf life,days,90,30,365,Given,F38,
+G02,"Inventory, shelf life and buffers",MT / QC minimum days left,days,60,0,120,Given,F39,
+G03,"Inventory, shelf life and buffers",Frozen pulp shelf life,days,180,30,365,Given,F37,
+G04,"Inventory, shelf life and buffers",Depot cover target,days,21,3,60,Given,F45,
+G05,"Inventory, shelf life and buffers",Pulp safety buffer,days of use,3,0,21,Assumed,A37,handoff 5.4
+G06,"Inventory, shelf life and buffers",Planning horizon for the material balance,days,56,14,112,Assumed,A38,spec: 28-56 days
+G07,"Inventory, shelf life and buffers",Minimum service level for any flavor in an allocation,share,0.0,0,1,Assumed,A39,management floor; 0 = none
+G08,"Inventory, shelf life and buffers","Finished-goods lag, plant to depot shelf",days,7,0,28,Assumed,G02 / A48,plant-to-depot lane not in the case; drives the Supply -> Inventory projection and the MT/QC gate
+F28,"Demand, forecast and signals",Forecast for inventory views,source,file,file/dashboard,,Assumed,A49,file = teammate's static P50/P80; dashboard = prompt-1 one-week-ahead forecast
+F29,"Demand, forecast and signals",Flag a forecast difference above,share,0.25,0.05,1,Assumed,A49,
+H01,Inventory rebalancing and loss (teammate feed),Loss per bottle below P50,INR/bottle,15.36,0,60,Derived,file; 15.36 + 3.84 = F26 × F02,with h02 a bottle below P50 costs ₹19.20 (₹60 × 32%)
+H02,Inventory rebalancing and loss (teammate feed),Extra loss per bottle below P80,INR/bottle,3.84,0,60,Derived,file; F26 × F02 × 20%,
+H03,Inventory rebalancing and loss (teammate feed),Overstock threshold,days of cover,35,14,90,Assumed,file / A50,
+H04,Inventory rebalancing and loss (teammate feed),Minimum transfer,bottles,10000,1000,100000,Assumed,file,needs an optimiser re-run
+H05,Inventory rebalancing and loss (teammate feed),Write-off rate on bottles past the saleable window,INR/bottle,0,0,60,Assumed,A51,0 = no rupee write-off is claimed; the case's ₹6 Cr (F60) is not reproduced by this view
+H06,Inventory rebalancing and loss (teammate feed),Sender floor (cover kept after a transfer),days,16.25,5,40,Assumed,inferred from file,needs an optimiser re-run
+H07,Inventory rebalancing and loss (teammate feed),Receiver trigger / top-up,days,16.0,5,30,Assumed,inferred from file,needs an optimiser re-run; top-up 16.2 days

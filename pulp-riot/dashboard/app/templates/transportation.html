@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Transportation · PulpSense{% endblock %}
+{% block content %}
+{% set k = v.kpi %}
+
+<h1>Transportation</h1>
+<p class="sub">How pulp reaches the plants and how bottles reach the depots: routes, lead times, reliability, disruptions and what expediting cost. Week of {{ week.strftime('%d %B %Y') }}.</p>
+
+<div class="stats">
+  <div class="stat {% if k.closed_days %}alert{% endif %}">
+    <div class="v">{{ 'Closed' if k.closed_days else 'Open' }}</div>
+    <div class="k">Passionfruit highway · the only road</div>
+    <div class="d">{% if k.closed_days %}<b>{{ k.closed_days }} of 7 days</b> closed this week · {% endif %}closed in <b>{{ k.n_closures }} of the last {{ k.n_summers }}</b> summers on record{% if k.longest %} · longest {{ k.longest }} days{% endif %}</div>
+  </div>
+  <div class="stat {% if k.on_time is not none and k.on_time < 0.9 %}warn{% endif %}">
+    <div class="v">{{ '%.0f'|format(k.on_time * 100) ~ '%' if k.on_time is not none else '–' }}</div>
+    <div class="k">Pulp deliveries on time · last 13 weeks</div>
+    <div class="d">{{ k.n13 }} deliveries received, all suppliers and modes</div>
+  </div>
+  <div class="stat {% if k.air_cost %}alert{% endif %}">
+    <div class="v">{{ k.air_cost|inr if k.air_cost else '₹0' }}</div>
+    <div class="k">Air freight · {{ week.year }} so far</div>
+    <div class="d">{% if k.air_cost %}{{ '{:,.0f}'.format(k.air_kg) }} kg of passionfruit at 5× cost — the same pulp by road would have cost {{ k.air_normal|inr }}{% else %}No emergency freight this year{% endif %}</div>
+  </div>
+  <div class="stat">
+    <div class="v">{{ k.water_n }}</div>
+    <div class="k">Import orders on the water</div>
+    <div class="d">{% if k.water_n %}{{ '{:,.0f}'.format(k.water_kg) }} kg of dragonfruit · next due {{ k.next_eta.strftime('%d %b') }}{% else %}Nothing in transit · imports are ordered quarterly{% endif %}</div>
+  </div>
+</div>
+
+<div class="card" id="fragility">
+  <h2>Lane fragility and flags</h2>
+  {% for f in fr.flags %}<div class="banner {{ 'err' if f.sev == 'High' else 'warn' }}" style="margin-bottom:8px">{{ f.text }} <span class="small">({{ f.ref }})</span></div>{% endfor %}
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Lane</th><th>Fragility</th><th style="min-width:330px">Tests</th></tr></thead>
+    <tbody>{% for l in fr.lanes %}
+      <tr><td><b>{{ l.name }}</b></td>
+        <td>{% if l.level == 'High' %}<span class="tag hot">High</span>{% elif l.level == 'Medium' %}<span class="tag warm">Medium</span>{% elif l.level == 'Low' %}<span class="tag cold">Low</span>{% else %}<span class="tag muted">{{ l.level }}</span>{% endif %}</td>
+        <td class="small">{% for name, hit, val in l.tests %}<div>{% if hit %}<b style="color:var(--danger)">✕</b>{% elif hit is none %}·{% else %}<span style="color:var(--accent-d)">✓</span>{% endif %} {{ name }}: <b>{{ val }}</b></div>{% endfor %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  <div class="hint">High = single route with closures on record, or lead time longer than plant cover. Medium = any other test fails (on time below {{ '%.0f'|format(ctl['a11'] * 100) }}%, a11;
+    lead above {{ '%.0f'|format(ctl['a12'] * 100) }}% of cover, a12; quarterly ordering). Landslide season on record: {{ fr.season|join(', ') }} (month numbers, from closures_history). {{ ui.src('Derived') }}</div>
+</div>
+
+<div class="card">
+  <h2>Compare and choose · protecting the passionfruit lane against a {{ ctl['b02']|int }}-day closure</h2>
+  <p class="small" style="margin-top:0">Needed: {{ '%.0f'|format(tm.need_days) }} days of cover ({{ ctl['b02']|int }}-day closure + {{ ctl['g05']|int }}-day buffer). Procurement's target holds
+    {{ '%.1f'|format(tm.have) }} days (e03) — short by {{ '%.1f'|format(tm.gap_days) }} days ≈ {{ '{:,.0f}'.format(tm.gap_days * tm.use) }} kg at today's use.</p>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Option</th><th class="num">Days protected</th><th>Cost</th><th>Lead</th><th>Depends on</th><th>Evidence</th><th>Verdict</th></tr></thead>
+    <tbody>{% for o in tm.options %}
+      <tr {% if o.winner %}class="win"{% endif %}><td><b>{{ o.name }}</b></td>
+        <td class="num">{{ ('%.0f'|format(o.protects)) if o.protects is not none else '–' }}{% if o.full %} <span class="tag cold">full</span>{% endif %}</td>
+        <td class="small">{{ o.cost_txt }}</td><td class="small">{{ o.lead }}</td><td class="small">{{ o.depends }}</td><td class="small muted">{{ o.evidence }}</td>
+        <td>{% if o.winner %}<span class="tag cold">chosen</span>{% elif not o.feasible %}<span class="tag muted">{{ 'conditional' if o.why.startswith('conditional') else 'not feasible' }}</span>{% else %}<span class="tag muted">compared</span>{% endif %}
+          {% if o.why %}<div class="small muted">{{ o.why }}</div>{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  <div class="hint">Rule: among feasible options, the cheapest that fully protects; otherwise the one that protects most. Pre-positioning becomes the choice once the cooperative confirms
+    surge volume (c05) — frozen pulp keeps 6 months (F37), so holding is possible; its cost needs the pulp price (G33) and cold-storage room (G08).
+    Air: {{ '%.0f'|format(tm.nf) }} ₹/kg normal freight ({{ tm.nf_src }}) × {{ '%g'|format(ctl['a06']) }}.</div>
+  {% if tm.rec %}{{ ui.review_form(tm.rec, '/transportation?asof=' ~ week.isoformat()) }}{% endif %}
+</div>
+
+<div class="card">
+  <h2>Inbound lanes · last 13 weeks</h2>
+  <div class="scroll-x">
+  <table class="tbl">
+    <thead><tr><th>Lane</th><th>Mode</th><th>Lead time</th><th>Orders</th><th class="num">Shipments</th><th class="num">On time</th><th class="num">Late</th><th class="num">Not shipped</th></tr></thead>
+    <tbody>
+    {% for l in v.lanes %}
+      <tr>
+        <td><b>{{ l.name }}</b>{% if l.single %} <span class="tag hot">only route</span>{% endif %}</td>
+        <td>{{ l.mode }}</td><td>{{ l.lead }}</td><td>{{ l.freq }}</td>
+        <td class="num">{{ l.n }}</td>
+        <td class="num">{{ '%.0f'|format(l.on_time * 100) ~ '%' if l.on_time is not none else '–' }}</td>
+        <td class="num">{% if l.late %}<span class="tag warm">{{ l.late }} · avg {{ '%.0f'|format(l.avg_late) }} d</span>{% else %}–{% endif %}</td>
+        <td class="num">{% if l.blocked %}<span class="tag hot">{{ l.blocked }}</span>{% else %}–{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="hint">Plants to depots: road, within the week (lead time not stated in the case). Depot to depot: 2–4 days at about ₹1.50 a bottle (case F49, F50). Lead times for mango, peach, basil, guava and domestic dragonfruit are assumed (case gap G07).</div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Passionfruit arriving at the plants · 26 weeks</h2>
+    {{ charts.stacked_weeks(v.arrivals.weeks, {'by road': v.arrivals.road, 'by air': v.arrivals.air}, {'by road': '#2251FF', 'by air': '#d97706'}, closed=v.arrivals.closed, unit=1e3, fmt='{:g}t')|safe }}
+    <div class="legend-inline" style="flex-wrap:wrap">
+      <span><span class="sw" style="background:#2251FF"></span>By road</span>
+      <span><span class="sw" style="background:#d97706"></span>By air (5× cost)</span>
+      <span><span class="sw" style="background:#fee2e2;border:1px solid #fca5a5"></span>Highway closed</span>
+      <span class="muted">Tonnes per week, both plants</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Highway closures on record</h2>
+    <table class="tbl">
+      <thead><tr><th>Summer</th><th>Closed?</th><th style="width:45%">Days closed</th></tr></thead>
+      <tbody>
+      {% for h in v.hist %}
+        <tr><td><b>{{ h.year }}</b></td>
+          <td>{% if h.ongoing %}<span class="tag hot">closed now</span>{% elif h.closed %}<span class="tag warm">{{ h.start.strftime('%d %b') }} – {{ h.end.strftime('%d %b') }}</span>{% else %}<span class="tag muted">open</span>{% endif %}</td>
+          <td>{% if h.closed %}<div class="bl" style="display:flex;justify-content:space-between;font-size:12px"><b>{{ h.days }} days</b></div>
+            <div class="bar-track"><div class="bar-fill" style="width:{{ h.days / 21 * 100 }}%;background:#b91c1c"></div></div>{% else %}–{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="hint">The case says the highway closed for at least a week in 3 of the last 5 summers, and there is no other road (case F41, F42). Which summers and how long, before 2026, are assumptions.</div>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Bottles shipped to depots · 26 weeks</h2>
+    {{ charts.stacked_weeks(v.outbound.weeks, v.outbound.series, {'North': '#051C2C', 'South': '#00A9F4', 'East': '#9DB8FF', 'West': '#64748b'})|safe }}
+    <div class="legend-inline" style="flex-wrap:wrap">
+      {% for r, c in [('North', '#051C2C'), ('South', '#00A9F4'), ('East', '#9DB8FF'), ('West', '#64748b')] %}<span><span class="sw" style="background:{{ c }}"></span>{{ r }}</span>{% endfor %}
+      <span class="muted">Lakh bottles per week, plants and co-packer to depots</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Imports on the water</h2>
+    {% if v.ships %}
+    <table class="tbl">
+      <thead><tr><th>Ordered</th><th class="num">kg</th><th>Due</th><th class="num">Days at sea</th></tr></thead>
+      <tbody>{% for s in v.ships %}
+        <tr><td>{{ s.ordered.strftime('%d %b %Y') }}</td><td class="num">{{ '{:,.0f}'.format(s.qty) }}</td>
+          <td>{{ s.eta.strftime('%d %b') }} {% if s.overdue %}<span class="tag hot">overdue</span>{% endif %}</td><td class="num">{{ s.days }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<div class="placeholder"><b>Nothing on the water this week.</b><br>Imported dragonfruit is ordered once a quarter (case F17).</div>{% endif %}
+
+    <h2 style="font-size:14px;margin-top:18px">Depot-to-depot transfers on record</h2>
+    {% if v.transfers %}
+    <table class="tbl">
+      <thead><tr><th>Date</th><th>From → to</th><th>Flavor</th><th class="num">Bottles</th><th class="num">Cost</th></tr></thead>
+      <tbody>{% for t in v.transfers %}
+        <tr><td>{{ t.date.strftime('%d %b %Y') }}</td><td>{{ t.frm }} → {{ t.to }}</td><td>{{ t.sku }}</td>
+          <td class="num">{{ t.units|bottles }}</td><td class="num">{{ t.cost|inr }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<div class="small muted">None so far.</div>{% endif %}
+    <div class="hint">Transfers are rare under the current process; see Distribution for where stock and shortages sat side by side.</div>
+  </div>
+</div>
+
+{% endblock %}

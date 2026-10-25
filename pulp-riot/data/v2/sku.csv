@@ -1,0 +1,6 @@
+﻿sku_id,name,launch_date,price_inr,unit_cost_inr,shelf_life_days,mt_qc_min_days_left,pulp_kg_per_bottle,pulp_mix,data_source
+MPB,Mango Peach Basil,before 2024,60.0,40.8,90,60,0.06,mango 55%; peach 35%; basil 10%,"Given (name, price, shelf life, cutoff); Derived (unit cost = price x (1 - 32%)); Assumed (kg/bottle, pulp mix)"
+GC,Guava Chilli,before 2024,60.0,40.8,90,60,0.06,guava 100%,"Given (name, price, shelf life, cutoff); Derived (unit cost = price x (1 - 32%)); Assumed (kg/bottle, pulp mix)"
+PP,Passionfruit Punch,before 2024,60.0,40.8,90,60,0.06,passionfruit 100%,"Given (name, price, shelf life, cutoff); Derived (unit cost = price x (1 - 32%)); Assumed (kg/bottle, pulp mix)"
+DB,Dragonfruit Bloom,before 2024,60.0,40.8,90,60,0.06,dragonfruit 100%,"Given (name, price, shelf life, cutoff); Derived (unit cost = price x (1 - 32%)); Assumed (kg/bottle, pulp mix)"
+DP,Dragon Passion,2026-03-02,60.0,40.8,90,60,0.06,passionfruit 50%; dragonfruit 50%,"Given (name, price, shelf life, cutoff); Derived (unit cost = price x (1 - 32%)); Assumed (kg/bottle, pulp mix)"

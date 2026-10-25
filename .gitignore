@@ -1,0 +1,29 @@
+# --- answer key for the planted test events: the dashboard never reads it, and it must not be published
+pulp-riot/data/v2/_hidden/
+
+# --- runtime state written by the dashboard (active scenario, saved scenarios, change log, decisions)
+pulp-riot/dashboard/state/
+
+# --- local tool settings
+.claude/
+
+# --- Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+*.egg-info/
+.pytest_cache/
+
+# --- logs and scratch
+pulp-riot/docs/check_prompt1_log.txt
+*.log
+
+# --- editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+~$*

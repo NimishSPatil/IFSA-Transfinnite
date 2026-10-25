@@ -1,0 +1,9 @@
+﻿event_id,date,event_type,description,affected_nodes,data_source,case_fact_id
+EV1,2026-03-02,launch,Dragon Passion launched (early March; exact day Assumed),X_MKT;X_PROC;C_QC,Assumed,F51
+EV2,2026-03-16,demand_spike_start,"Influencer reel goes viral, 2 weeks after launch (Derived)",C_QC,Derived,F52
+EV3,2026-03-30,demand_spike_peak,"Quick-commerce orders reach 4x, two weeks after the reel (Derived)",C_QC;D_N1;D_N2;D_S1;D_S2;D_E1;D_E2;D_W1;D_W2;D_W3,Derived,F53
+EV4,2026-03-31,signal_reaches_planners,Month-end consolidated sales reach planners; shortages already reported by trade (Derived),X_PLAN,Derived,F30;F54
+EV5,2026-05-11,highway_closure_start,Landslides close the only highway from the passionfruit cooperative (day Assumed within May),S_PASSION;P1;P2,Assumed,F55
+EV6,2026-05-18,air_freight_booked,Air freight booked in the 2nd week of closure (Derived from start date),S_PASSION;P1;P2,Derived,F44
+EV7,2026-05-25,passionfruit_pulp_exhausted,About 2 weeks of pulp cover used up (Derived: 14 days after start),P1;P2,Derived,F43
+EV8,2026-05-31,highway_closure_end,Closure ends after 3 weeks (Derived),S_PASSION,Derived,F55

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Overview · PulpSense{% endblock %}
+{% block content %}
+{% set k = o.kpi %}
+
+<h1>Overview</h1>
+<p class="sub">End-to-end view of the network for the week of {{ week.strftime('%d %B %Y') }} — demand, supply, inventory, distribution and transportation.</p>
+
+{# --------------------------------------------------------------- headline numbers #}
+<div class="stats">
+  <div class="stat">
+    <a href="/demand?asof={{ week.isoformat() }}">
+      <div class="v">{{ k.sold4|bottles }}</div>
+      <div class="k">Bottles sold · last 4 weeks</div>
+      <div class="d">{{ (k.sold4 * 60)|inr }}
+        {% if k.sold_ly4 %} · <b>{{ (k.sold4 / k.sold_ly4 - 1)|pct }}</b> vs same weeks last year{% endif %}</div>
+    </a>
+  </div>
+  <div class="stat {% if k.lost4 > 0.01 * k.sold4 %}alert{% endif %}">
+    <a href="/demand?asof={{ week.isoformat() }}">
+      <div class="v">{{ (k.lost4 * 60)|inr }}</div>
+      <div class="k">Sales lost to stock-outs · last 4 weeks</div>
+      <div class="d">{{ k.lost4|bottles }} bottles ordered but not supplied</div>
+    </a>
+  </div>
+  <div class="stat {% if k.below7 %}alert{% endif %}">
+    <a href="/inventory?asof={{ week.isoformat() }}">
+      <div class="v">{{ k.below7 }} <span style="font-size:14px;color:var(--t3);font-weight:700">/ {{ k.pairs }}</span></div>
+      <div class="k">Depot × flavor below 7 days of cover</div>
+      <div class="d">{{ k.stockouts }} at zero stock
+        {% if k.missing %} · <b style="color:var(--warn)">{{ k.missing|join(', ') }} did not report</b>{% endif %}</div>
+    </a>
+  </div>
+  <div class="stat {% if k.pf_cover < k.longest_closure %}alert{% endif %}">
+    <a href="/supply?asof={{ week.isoformat() }}">
+      <div class="v">{{ '%.0f'|format(k.pf_cover) }} days</div>
+      <div class="k">Passionfruit cover at the plants</div>
+      <div class="d">{% if k.longest_closure %}Longest highway closure so far: <b>{{ k.longest_closure }} days</b>{% else %}No highway closure on record yet{% endif %}
+        {% if k.closed_days %} · <b style="color:var(--danger)">road closed this week</b>{% endif %}</div>
+    </a>
+  </div>
+</div>
+
+{# --------------------------------------------------------------- five-area tiles #}
+<div class="tiles">
+  {% for t in o.tiles %}
+  <a class="tile {{ t.state }}" href="{{ t.href }}?asof={{ week.isoformat() }}">
+    <span class="nm"><span class="dot"></span>{{ t.name }}</span>
+    <span class="v{% if t.value_bad %} bad{% endif %}">
+      {% if t.value_text %}{{ t.value_text }}
+      {% elif t.value_kind == 'bottles' %}{{ t.value|bottles }}
+      {% else %}{{ '%.0f'|format(t.value) }} days{% endif %}
+    </span>
+    <span class="l">{{ t.label }}</span>
+    {% for ln in t.lines %}<span class="ln">{{ ln }}</span>{% endfor %}
+    <span class="sp">{{ charts.sparkline(t.spark, color=('#b91c1c' if t.state == 'bad' else '#2251FF'))|safe }}</span>
+    <span class="spl">{{ t.spark_label or 'last 12 weeks' }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="cols3">
+<div>
+  <div class="card">
+    <h2>Sales and lost sales · 26 weeks to {{ week.strftime('%d %b') }}</h2>
+    {{ charts.trend_bars(o.trend.weeks, o.trend.sold, o.trend.lost)|safe }}
+    <div class="legend-inline">
+      <span><span class="sw" style="background:#2251FF"></span>Bottles sold</span>
+      <span><span class="sw" style="background:#b91c1c"></span>Ordered but not supplied (lost)</span>
+      <span class="muted">Lakh bottles per week, all depots and channels</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>The network this week</h2>
+    {{ charts.network(o.net)|safe }}
+    <div class="hint">Red: highway closed, passionfruit under 7 days, or a region with a depot out of stock. Amber: passionfruit under 14 days.
+      Dragon Passion {% if o.net.dp_live %}is on sale{% else %}is not launched yet{% endif %}.</div>
+  </div>
+</div>
+
+<div>
+  <div class="card">
+    <h2>Needs attention <span class="count">{{ rm_counts.Immediate }} now · {{ rm_counts.Soon }} soon</span></h2>
+    {% for x in top %}
+      <div class="rm-item {{ x.severity }}" style="margin-bottom:6px">
+        <a class="t" href="{{ x.link.split('#')[0] }}?asof={{ week.isoformat() }}{% if '#' in x.link %}#{{ x.link.split('#')[1] }}{% endif %}" style="color:inherit;font-size:13px">{{ x.title }}</a>
+        <div class="meta"><span>{{ x.bucket }}</span>·<span>{{ x.group }}</span>{% if x.rec_id %}·<span>{{ x.status }}</span>{% endif %}</div>
+      </div>
+    {% else %}
+      <div class="placeholder"><b>Nothing immediate or due soon.</b><br>Structural risks and data gaps are on READ_ME.</div>
+    {% endfor %}
+    <div class="hint"><a href="/readme?asof={{ week.isoformat() }}">All of READ_ME</a> · every recommendation needs a named approver (<a href="/reviews?asof={{ week.isoformat() }}">review queue</a>).</div>
+  </div>
+
+  <div class="card">
+    <h2>The case, for reference</h2>
+    <div class="bars">
+      <div class="bar-row"><div class="bl"><span>Summer revenue lost to stock-outs</span><span class="n">₹46.1 Cr</span></div></div>
+      <div class="bar-row"><div class="bl"><span>Write-offs and discounts</span><span class="n">₹6.0 Cr</span></div></div>
+      <div class="bar-row"><div class="bl"><span>Air freight at 5× cost</span><span class="n">₹3.2 Cr</span></div></div>
+    </div>
+    <div class="hint" style="margin-top:8px">Last summer's losses as stated in the case (March–June 2026). Pick a week in that summer to see them build up.</div>
+  </div>
+</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,9 @@
+n,check,result,detail
+1,Every control and risk tagged and referenced,pass,"92 controls, 31 risks; untagged: none"
+2,No hard-coded parameter: each control moves the outputs,pass,89 of 89 live controls change at least one output; 3 optimiser controls locked; problems: none
+3,Co-packer blocked below the combined-plant threshold,pass,"3 quiet weeks below threshold, all blocked; peak week with 5 Cr/month plants blocked: True"
+4,Replays report detection date and lead over month-end,pass,"March spike detected 2026-03-20, 11 days before Planning sees it on 2026-03-31; May closure detected 2026-05-11 (pre-season warning 2026-04-06), 20 days before 2026-05-31"
+5,Moving a Given value adds a READ_ME entry,pass,Departs from case: Passionfruit road transit = 4 days
+6,READ_ME shows known data issues and new risks,pass,"6 known data issues; new risks listed: ['R19', 'R20', 'R21', 'R22', 'R23', 'R24', 'R25', 'R26']"
+7,Inventory logic separated (prompt 2 built on the hand-off hooks),pass,engine/inventory_iface.py (prompt-1 hooks) + engine/inventory.py (prompt 2); descriptive page links to the module
+8,No accuracy claim from the sample data,FAIL,fcsource.html: Neither is claimed as accurate; this sample cannot validate either.

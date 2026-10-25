@@ -1,0 +1,9 @@
+﻿supplier_id,ingredient,mode,lead_time_days,order_cycle,single_source,data_source
+S_MANGO,mango,road,3,weekly,N,Assumed lead time (G07)
+S_PEACH,peach,road,3,weekly,N,Assumed lead time (G07)
+S_BASIL,basil,road,3,weekly,N,Assumed lead time (G07)
+S_GUAVA1,guava,road,3,weekly,N,Given: two guava suppliers (F76)
+S_GUAVA2,guava,road,3,weekly,N,Given: two guava suppliers (F76)
+S_PASSION,passionfruit,road (air as contingency),3,weekly,Y,"Given: 3 days, only road, single cooperative (F35, F40, F41, F77)"
+S_DRAGON_DOM,dragonfruit (60%),road,3,weekly,N,Given share (F14); lead time Assumed
+S_DRAGON_IMP,dragonfruit (40%),sea,42-56,quarterly,N,"Given: 6-8 weeks, quarterly (F15-F17); sea Assumed"

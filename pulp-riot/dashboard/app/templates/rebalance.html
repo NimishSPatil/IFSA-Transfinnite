@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Inventory rebalancing · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() ~ '&win=' ~ win %}
+{% set CELL = {'out': ('#7f1d1d', '#fff'), 'p50': ('#fee2e2', '#b91c1c'), 'p80': ('#fef3c7', '#b45309'), 'ok': ('#EAF0FF', '#051C2C'), 'over': ('#ede9fe', '#6d28d9')} %}
+
+<h1>Inventory · rebalancing</h1>
+<p class="sub">Depot-to-depot transfers recommended by the teammate's offline optimiser, replayed week by week, and the shortage loss they remove.
+  Source: <code>data/inventory_feed/dashboard_data.json</code> {{ ui.src('Derived', 'teammate file') }}
+  <span class="tag warm" title="The transfers were chosen offline; changing optimiser settings here does not re-run it">precomputed at default assumptions</span></p>
+{{ ui.scen_banner() }}
+{{ ui.inv_tabs('rebalance', win) }}
+{{ ui.win_chips(win, '/rebalance') }}
+
+{# ------------------------------------------------------------ reconciliation strip #}
+<div class="card" id="check">
+  <h2>Reconciliation with the handoff {% if rc.all_ok %}<span class="tag cold">7 of 7 agree</span>{% else %}<span class="tag hot">mismatch</span>{% endif %}</h2>
+  <div class="checkstrip">
+    {% for r in rc.rows %}
+      <div class="ck {{ 'ok' if r.ok else 'bad' }}">
+        <div class="n">{{ r.name }}</div>
+        <div class="v">{% if r.unit == 'cr' %}₹{{ '%.2f'|format(r.handoff) }} Cr{% elif r.unit == 'lakh' %}{{ '%.2f'|format(r.handoff) }} L{% else %}{{ r.handoff }}{% endif %}</div>
+        <div class="s">{{ '✓' if r.ok else '✕' }} file {% if r.unit == 'cr' %}{{ '%.4f'|format(r.file) }}{% else %}{{ r.file|round(2) }}{% endif %} ·
+          rows {% if r.unit == 'cr' %}{{ '%.4f'|format(r.recomputed) }}{% else %}{{ r.recomputed|round(2) }}{% endif %}</div>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="small mt12">Loss recomputed from all {{ rc.n_rows|int }} weekly rows with the stated rule (₹15.36 per bottle below P50 + ₹3.84 below P80):
+    <b>{{ rc.matched_rows }} rows agree exactly</b>. The only exceptions are the {{ rc.exceptions|length }} unreported rows —
+    {% for e in rc.exceptions %}{{ e.depot }} {{ e.sku }}{{ ', ' if not loop.last }}{% endfor %}, week of {{ rc.exceptions[0].week.strftime('%d %b %Y') }} —
+    which the file marks "ok" yet keeps {{ ui.cr(rc.exc_loss) }} of loss (the dataset's missing depot report). Without them the rule gives {{ ui.cr(rc.pure_rule_before) }} before.
+    Net by year: {% for y, v in rc.year_net %}{{ y }} {{ '%+.2f'|format(v) }} Cr{{ ' · ' if not loop.last }}{% endfor %} (handoff). The JS file's payload is
+    {{ 'identical to' if rc.js_same else 'DIFFERENT from' }} the JSON.</div>
+  <div class="hint">Strip uses the file's own rates so it stays a reconciliation; every number below uses the Control Panel's rates (h01, h02, a08).</div>
+</div>
+
+{# ------------------------------------------------------------ headline #}
+{% if ctl['f28'] == 'dashboard' %}
+<div class="banner err"><b>Forecast source: dashboard (f28).</b> Summer-week loss and cover below use the prompt-1 depot forecast instead of the file's P50/P80,
+  so they are a different definition and do not reconcile to the handoff. The strip above still checks the file.</div>
+{% endif %}
+<div class="stats">
+  <div class="stat alert"><div class="v">{{ ui.cr(sm.before) }}</div><div class="k">Shortage loss before {{ ui.tagd(ctl.tag('h01', 'h02')) }}</div>
+    <div class="d">{{ sm.label }} · no transfers</div></div>
+  <div class="stat"><div class="v">{{ ui.cr(sm.after_total) }}</div><div class="k">After rebalancing, incl. transport {{ ui.tagd(ctl.tag('h01', 'h02', 'a08')) }}</div>
+    <div class="d">{{ ui.cr(sm.after) }} loss + {{ ui.cr(sm.transport) }} transport ({{ sm.n }} transfers, {{ '%.2f'|format(sm.bottles / 1e5) }} L bottles)</div></div>
+  <div class="stat {{ 'good' if sm.saving > 0 else 'alert' }}"><div class="v">{{ ui.cr(sm.saving) }}</div><div class="k">Net saving from moving stock</div>
+    <div class="d">{{ '%.0f'|format(100 * sm.saving / sm.before) if sm.before else '–' }}% of the loss before</div></div>
+  <div class="stat warn"><div class="v">{{ ui.share(sm.pp_dp_share) }}</div>
+    <div class="k">of the remaining loss is PP and DP</div><div class="d">{{ ui.cr(sm.pp_dp) }} — a supply problem</div></div>
+</div>
+<div class="banner warn"><b>Moving stock cannot fix most of this.</b> {{ ui.share(sm.pp_dp_share) }} of the loss left after rebalancing
+  ({{ ui.cr(sm.pp_dp) }}) is Passionfruit Punch and Dragon Passion. Those weeks were short across the whole network (the highway closure and the viral spike),
+  so there was no surplus depot to move from: it is a supply problem, handled on <a href="/risk?asof={{ week.isoformat() }}">the supply risk engine</a>
+  and quantified on <a href="/link{{ q }}">Supply ↔ Inventory</a>.</div>
+
+<div class="cols">
+  <div class="card" id="years">
+    <h2>Net saving by year · whole file</h2>
+    <table class="tbl"><thead><tr><th>Year</th><th class="num">Transfers</th><th class="num">Loss removed</th><th class="num">Transport</th><th class="num">Net</th></tr></thead><tbody>
+      {% for y in sm.years %}<tr><td><b>{{ y.year }}</b></td><td class="num">{{ y.n }}</td><td class="num">{{ ui.cr(y.before - y.after) }}</td>
+        <td class="num">{{ ui.cr(y.transport) }}</td>
+        <td class="num"><b style="color:{{ 'var(--danger)' if y.net < 0 else 'var(--accent-d)' }}">{{ '%+.2f'|format(y.net / 1e7) }} Cr</b></td></tr>{% endfor %}
+    </tbody></table>
+    <div class="hint">2024 and 2025 transfers cost more in transport than the shortage they removed: outside the 2026 summer there was little shortage to fix.</div>
+    <table class="tbl mt12"><thead><tr><th>Default window</th><th>For</th><th>Against</th><th>Verdict</th></tr></thead><tbody>
+      <tr class="win"><td><b>Mar–Jun 2026</b></td><td>The case's summer (F18, F31); where the loss is</td><td>Hides 2024–25, so the year table stays on every window</td><td><span class="tag cold">chosen</span></td></tr>
+      <tr><td>Whole file</td><td>Matches the handoff totals</td><td>Mixes in two years of transfers that lost money</td><td><span class="tag muted">one click</span></td></tr>
+      <tr><td>Calendar 2026</td><td>A year view</td><td>Not the case's season</td><td><span class="tag muted">one click</span></td></tr>
+      <tr><td>Rolling to the as-of week</td><td>Consistent with the rest of the dashboard</td><td>The feed is a retrospective replay, so partial windows mislead</td><td><span class="tag muted">rejected</span></td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <h2>By flavor · {{ sm.label }}</h2>
+    <table class="tbl"><thead><tr><th>Flavor</th><th class="num">Before</th><th class="num">After</th><th class="num">Transport</th><th class="num">Net</th><th>Verdict</th></tr></thead><tbody>
+      {% for s in sm.skus %}<tr><td><b>{{ s.sku }}</b></td><td class="num">{{ ui.cr(s.before) }}</td><td class="num">{{ ui.cr(s.after) }}</td>
+        <td class="num">{{ ui.cr(s.transport) }}</td>
+        <td class="num"><b style="color:{{ 'var(--danger)' if s.net < 0 else 'inherit' }}">{{ '%+.3f'|format(s.net / 1e7) }}</b></td>
+        <td>{% if s.sku in ('PP', 'DP') %}<span class="tag hot">{{ s.label }}</span>{% elif s.net < 0 %}<span class="tag warm">{{ s.label }}</span>{% else %}<span class="tag cold">{{ s.label }}</span>{% endif %}</td></tr>{% endfor %}
+    </tbody></table>
+    <div class="hint">Net = loss removed − transport, in ₹ crore. Guava Chilli moves cost more than they save; PP and DP stay short because no depot had spare stock.</div>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>By month · before vs after</h2>
+    {{ charts.paired_bars(sm.months|map(attribute='ym')|list, sm.months|map(attribute='before')|list, sm.months|map(attribute='after')|list,
+                         sm.months|map(attribute='transport')|list, fmt='₹{:g}')|safe }}
+    <div class="legend-inline" style="flex-wrap:wrap"><span><span class="sw" style="background:#051C2C;opacity:.75"></span>Loss before</span>
+      <span><span class="sw" style="background:#2251FF"></span>Remaining loss after</span><span><span class="sw" style="background:#d97706"></span>Transport</span>
+      <span class="muted">₹ crore; month = year-month the week starts in (the file's monthly[] adds months across years, so it is not used)</span></div>
+  </div>
+  <div class="card">
+    <h2>By week · loss before and after</h2>
+    {{ charts.lines(sm.weekly.weeks, {'before': sm.weekly.before, 'after': sm.weekly.after}, {'before': '#051C2C', 'after': '#2251FF'}, unit=1e7, fmt='₹{:g}', zero=True)|safe }}
+    <div class="legend-inline"><span><span class="sw" style="background:#051C2C"></span>Before</span><span><span class="sw" style="background:#2251FF"></span>After (excl. transport)</span><span class="muted">₹ crore per week</span></div>
+  </div>
+</div>
+
+{# ------------------------------------------------------------ heatmap + transfers #}
+<div class="card" id="heat">
+  <h2>Depot × flavor cover · week of {{ iweek.strftime('%d %b %Y') }} · {{ side }}</h2>
+  <form class="flexrow" method="get" action="/rebalance#heat" style="flex-wrap:wrap;margin-bottom:10px">
+    <input type="hidden" name="asof" value="{{ week.isoformat() }}"><input type="hidden" name="win" value="{{ win }}"><input type="hidden" name="side" value="{{ side }}">
+    <select name="wk" onchange="this.form.submit()" aria-label="Week" style="width:auto;min-height:36px;padding:5px 9px;font-size:14px">
+      {% for x in iweeks|reverse %}<option value="{{ x.isoformat() }}" {% if x == iweek %}selected{% endif %}>Week of {{ x.strftime('%d %b %Y') }}{% if x in wk_with %} · transfers{% endif %}</option>{% endfor %}
+    </select>
+    <a class="chip {{ 'on' if side == 'before' }}" href="/rebalance{{ q }}&wk={{ iweek.isoformat() }}&side=before#heat">Before</a>
+    <a class="chip {{ 'on' if side == 'after' }}" href="/rebalance{{ q }}&wk={{ iweek.isoformat() }}&side=after#heat">After rebalancing</a>
+    <noscript><button class="btn tiny" type="submit">Go</button></noscript>
+  </form>
+  <div class="scroll-x"><table class="tbl heat">
+    <thead><tr><th>Depot</th>{% for s in INV_SKUS %}<th class="num">{{ s }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for r in heat %}<tr><td><b>{{ r.depot }}</b> <span class="small muted">{{ r.region }}</span></td>
+      {% for c in r.cells %}{% if c %}
+        {% set k = 'out' if c.closing <= 0 else ('p50' if c.status == 'below P50' else ('p80' if c.status == 'below P80' else ('over' if c.cover and c.cover > ctl['h03'] else 'ok'))) %}
+        <td class="num" style="background:{{ CELL[k][0] }};color:{{ CELL[k][1] }}" title="{{ '{:,.0f}'.format(c.closing) }} bottles · {{ c.status }}{% if c.loss %} · loss ₹{{ '{:,.0f}'.format(c.loss) }}{% endif %}">
+          <b>{{ '%.0f'|format(c.cover) if c.cover is not none else '–' }}</b>{% if c.exception %}*{% endif %}</td>
+      {% else %}<td></td>{% endif %}{% endfor %}</tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="legend-inline" style="flex-wrap:wrap">
+    {% for k, l in [('out', 'Stock-out'), ('p50', 'Below P50'), ('p80', 'Below P80'), ('ok', 'OK'), ('over', 'Over ' ~ (ctl['h03']|int) ~ ' days')] %}
+      <span><span class="sw" style="background:{{ CELL[k][0] }};border:1px solid #ccd2e0"></span>{{ l }}</span>{% endfor %}
+    <span class="muted">Days of cover = closing ÷ (P50 ÷ 7). * unreported row.</span></div>
+</div>
+
+<div class="card" id="transfers">
+  <h2>Transfers · week of {{ iweek.strftime('%d %b %Y') }} <span class="count">{{ tr|length }}</span></h2>
+  {% if tr %}
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Flavor</th><th>From → to</th><th class="num">Bottles</th><th class="num">Cost</th><th class="num">Cover at sender</th><th class="num">at receiver</th><th>Reasons</th><th>Approver</th><th>Status</th></tr></thead>
+    <tbody>{% for t in tr %}<tr>
+      <td><b>{{ t.sku }}</b></td><td>{{ t.frm }} → {{ t.to }}</td><td class="num">{{ '{:,}'.format(t.bottles) }}</td><td class="num">₹{{ '{:,.0f}'.format(t.cost) }}</td>
+      <td class="num">{{ t.cs }} d{% if t.below_target %} <span class="tag warm" title="sender below the {{ ctl['g04']|int }}-day target">below target</span>{% endif %}</td>
+      <td class="num">{{ t.cr }} d</td><td class="small">{{ t.reasons|join(', ') }}</td><td class="small">{{ t.approver }}</td><td>{{ ui.status(t.status) }}</td></tr>
+      <tr><td colspan="9" style="padding-top:0"><details><summary class="small" style="cursor:pointer">Review this transfer</summary>
+        {{ ui.review_form(t, '/rebalance' ~ q ~ '&wk=' ~ iweek.isoformat() ~ '#transfers') }}</details></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="placeholder"><b>No transfers in this week.</b><br>Pick a week marked "transfers" in the selector.</div>{% endif %}
+  <div class="hint">Cost = bottles × ₹{{ '%.2f'|format(ctl['a08']) }} (a08, F50). Transit {{ ctl['a07']|int }} days (a07, case range 2–4, F49; the file used 3).
+    Every transfer is a recommendation for the supply chain manager; approving it records the decision and moves nothing.</div>
+</div>
+
+{# ------------------------------------------------------------ replication #}
+<div class="card" id="replication">
+  <h2>Can the optimiser be reproduced? Compare and choose</h2>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Approach</th><th>What it gives</th><th>Risk</th><th>Verdict</th></tr></thead><tbody>
+      <tr class="win"><td><b>Keep the 113 precomputed transfers</b></td><td>Exact reconciliation to the handoff; financial controls recalculate on them</td>
+        <td>Optimiser settings cannot be changed here</td><td><span class="tag cold">chosen</span></td></tr>
+      <tr><td><b>Transparent greedy replica (server-side, in this dashboard)</b></td><td>Re-runs under new thresholds</td>
+        <td>Reproduces {{ rep.exact[0] }} of {{ rep.exact[1] }} transfers ({{ '%.0f'|format(100 * rep.rate) }}%), below the {{ '%.0f'|format(100 * rep.tolerance) }}% tolerance</td>
+        <td><span class="tag muted">shown as evidence only</span></td></tr>
+      <tr><td><b>In-browser JavaScript greedy</b></td><td>Same as above, client-side</td><td>Same rule, same match rate; this dashboard renders on the server</td><td><span class="tag muted">not needed</span></td></tr>
+      <tr><td><b>Re-run the teammate's optimiser</b></td><td>True what-ifs</td><td>Offline and undocumented; questions below</td><td><span class="tag muted">after the teammate answers</span></td></tr>
+    </tbody></table></div>
+  <div class="checkstrip mt12">
+    <div class="ck {{ 'ok' if rep.week_sku[0] / rep.week_sku[1] > 0.9 }}"><div class="n">Weeks × flavors with a transfer</div><div class="v">{{ rep.week_sku[0] }} / {{ rep.week_sku[1] }}</div><div class="s">when to act</div></div>
+    <div class="ck {{ 'ok' if rep.receivers[0] / rep.receivers[1] > 0.9 }}"><div class="n">Receivers</div><div class="v">{{ rep.receivers[0] }} / {{ rep.receivers[1] }}</div><div class="s">who is short</div></div>
+    <div class="ck bad"><div class="n">Senders</div><div class="v">{{ rep.senders[0] }} / {{ rep.senders[1] }}</div><div class="s">who gives</div></div>
+    <div class="ck bad"><div class="n">Exact transfers (±5% bottles)</div><div class="v">{{ rep.exact[0] }} / {{ rep.exact[1] }}</div><div class="s">tolerance {{ '%.0f'|format(100 * rep.tolerance) }}%</div></div>
+  </div>
+  <div class="small mt12">Rule tried: cover = (last week's closing after transfers + this week's receipts) ÷ (max of last week's sales, this week's P50) per day — this
+    reproduces the file's stated cover for all 113 senders and 107 of 113 receivers. Receivers below {{ rep.params.R }} days are topped up to 16.2; the sender with the most stock above
+    {{ rep.params.F }} days gives, rounded to 1,000, at least {{ '{:,}'.format(rep.params.lot) }}. It finds the same shortages but not the same senders (only 11 of the
+    file's 113 transfers stay inside one region, so it is not "nearest depot").</div>
+  <div class="mt12">
+    {% for c in locked %}<div class="flexrow small" style="margin:4px 0"><span class="ctl-id">{{ c.id|upper }}</span> {{ c.label }}:
+      <input type="number" value="{{ c.default }}" disabled style="width:90px;min-height:30px;padding:3px 6px;font-size:13px">
+      <span class="tag muted">{% if c.locked %}locked — needs an optimiser re-run{% else %}live for Supply; the precomputed transfers keep 3 days{% endif %}</span></div>{% endfor %}
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card" id="questions">
+    <h2>Open questions for the teammate</h2>
+    <ol class="small" style="padding-left:18px;margin:0;line-height:1.7">{% for x in questions %}<li>{{ x }}</li>{% endfor %}</ol>
+    <div class="hint">Also on READ_ME. Not blocking: the dashboard states what it assumes meanwhile.</div>
+  </div>
+  <div class="card">
+    <h2>Definitions (from the file)</h2>
+    <div class="small" style="line-height:1.6">
+      <b>Loss</b> {{ meta.loss_rule }}.<br>
+      <b>Before</b> = the week as it happened; <b>after</b> = the same week replayed with the transfers.
+      <b>Cover</b> = closing ÷ (P50 ÷ 7). P50/P80 are the file's static forecasts (see Forecast source).<br>
+      <b>File assumptions:</b> {% for k, v in meta.assumptions.items() %}{{ k|replace('_', ' ') }} {{ v }}{{ '; ' if not loop.last }}{% endfor %}.<br>
+      This loss is shortage-only. It is not the case's ₹14.7 Cr contribution lost (C11) nor the file's flat-rule ₹25.97 Cr (a different definition). Network stock is
+      not conserved in the replay (+{{ '%.2f'|format(con.total / 1e5) }} L bottles; DP +{{ '{:,.0f}'.format(con.dp_mode) }} a week from {{ con.dp_from.strftime('%d %b') }}).
+    </div>
+  </div>
+</div>
+{% endblock %}

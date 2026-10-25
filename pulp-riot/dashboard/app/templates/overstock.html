@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Overstock &amp; aging · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() ~ '&win=' ~ win %}
+
+<h1>Overstock &amp; aging</h1>
+<p class="sub">The file's loss rule counts shortage only. This view shows the other side: depot-weeks holding more than {{ ctl['h03']|int }} days of cover (h03),
+  the bottles above that, and how much stock sits beyond the {{ (ctl['g01'] - ctl['g02'])|int }} saleable days a bottle has before modern trade and quick commerce
+  refuse it (F38, F39, C14).</p>
+{{ ui.scen_banner() }}
+{{ ui.inv_tabs('overstock', win) }}
+{{ ui.win_chips(win, '/overstock') }}
+
+<div class="stats">
+  <div class="stat warn"><div class="v">{{ o.before.n }} → {{ o.after.n }}</div><div class="k">Depot-weeks over {{ ctl['h03']|int }} days, before → after {{ ui.tagd(ctl.tag('h03')) }}</div>
+    <div class="d">{% if o.after.n > o.before.n %}rebalancing adds {{ o.after.n - o.before.n }}{% else %}rebalancing removes {{ o.before.n - o.after.n }}{% endif %}</div></div>
+  <div class="stat"><div class="v">{{ o.before.bottles|bottles }} → {{ o.after.bottles|bottles }}</div><div class="k">Bottle-weeks above that cover</div>
+    <div class="d">summed over depot-weeks: a bottle that sits for 3 weeks counts 3 times</div></div>
+  <div class="stat"><div class="v">{{ o.before.age_peak|bottles }} → {{ o.after.age_peak|bottles }}</div><div class="k">Bottles beyond {{ o.sale|int }} saleable days of cover, at the peak week</div>
+    <div class="d">{% if o.before.age_peak_week %}week of {{ o.before.age_peak_week|day }} {{ o.before.age_peak_week.year }} before; {% endif %}{{ o.before.age_n }} → {{ o.after.age_n }} depot-weeks;
+      at P50 they cannot all sell before the MT/QC cutoff</div></div>
+  <div class="stat"><div class="v">{% if o.writeoff %}{{ ui.cr(o.writeoff.before) }} → {{ ui.cr(o.writeoff.after) }}{% else %}not claimed{% endif %}</div>
+    <div class="k">Write-off in ₹ {% if o.writeoff %}{{ ui.src('Assumed', 'h05 = ₹' ~ o.rate ~ '/bottle') }}{% endif %}</div>
+    <div class="d">{% if o.writeoff %}upper bound: assumed rate × the peak bottles beyond the window, priced once{% else %}set a write-off rate (h05) to price it; the case's ₹6 Cr (F60) is not reproduced here{% endif %}</div></div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Where rebalancing adds overstock · whole file</h2>
+    <table class="tbl"><thead><tr><th>Depot</th><th>Flavor</th><th class="num">New over-{{ ctl['h03']|int }} weeks</th></tr></thead><tbody>
+      {% for d, s, n in o_all.new %}<tr><td>{{ d }}</td><td>{{ s }}</td><td class="num">{{ n }}</td></tr>{% else %}<tr><td colspan="3" class="muted">None.</td></tr>{% endfor %}
+    </tbody></table>
+    <div class="hint">Whole file: {{ o_all.before.n }} → {{ o_all.after.n }} depot-weeks (the file's own status column: {{ o_all.before.status_n }} → {{ o_all.after.status_n }};
+      the two differ only when cover rounds to exactly {{ ctl['h03']|int }}). Receivers that were topped up stay long once the shortage passes;
+      {{ o_all.gone|map(attribute=2)|sum }} depot-weeks leave the overstock list as senders give stock away.</div>
+  </div>
+  <div class="card">
+    <h2>Overstock by depot and flavor · {{ WINDOWS[win][0] }}</h2>
+    <table class="tbl"><thead><tr><th></th>{% for s in INV_SKUS %}<th class="num">{{ s }}</th>{% endfor %}</tr></thead><tbody>
+      <tr><td><b>Before</b></td>{% for s in INV_SKUS %}<td class="num">{{ o.before.by_sku[s] }}</td>{% endfor %}</tr>
+      <tr><td><b>After</b></td>{% for s in INV_SKUS %}<td class="num" style="{{ 'font-weight:700;color:var(--warn)' if o.after.by_sku[s] > o.before.by_sku[s] }}">{{ o.after.by_sku[s] }}</td>{% endfor %}</tr>
+    </tbody></table>
+    <table class="tbl mt12"><thead><tr><th></th>{% for d in INV_DEPOTS %}<th class="num">{{ d[2:] }}</th>{% endfor %}</tr></thead><tbody>
+      <tr><td><b>Before</b></td>{% for d in INV_DEPOTS %}<td class="num">{{ o.before.by_depot[d] }}</td>{% endfor %}</tr>
+      <tr><td><b>After</b></td>{% for d in INV_DEPOTS %}<td class="num" style="{{ 'font-weight:700;color:var(--warn)' if o.after.by_depot[d] > o.before.by_depot[d] }}">{{ o.after.by_depot[d] }}</td>{% endfor %}</tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Largest overstocks before rebalancing · {{ WINDOWS[win][0] }}</h2>
+  <table class="tbl"><thead><tr><th>Week of</th><th>Depot</th><th>Flavor</th><th class="num">Cover</th><th class="num">Bottles above {{ ctl['h03']|int }} days</th></tr></thead><tbody>
+    {% for r in o.top %}<tr><td>{{ r.week|day }} {{ r.week.year }}</td><td>{{ r.depot }}</td><td>{{ r.sku }}</td><td class="num">{{ '%.0f'|format(r.cover) }} d</td><td class="num">{{ r.excess|bottles }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">No overstock in this window.</td></tr>{% endfor %}
+  </tbody></table>
+  <div class="hint">One row in August 2024 (D_W2 MPB) is a ×10 typing error already flagged as a stock-ledger break; it inflates the whole-file total. No row is corrected.
+    This view and the shortage loss are separate: the case's write-offs (₹6 Cr, F60) came from aged MPB/GC stock that this file does not price.</div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+﻿check,value,target,tolerance,status,note
+revenue Jul 2025-Jun 2026 (INR crore),1200.5943,1200.0,2.4,pass,within 0.2%
+summer 2026 bottles (crore),9.6395,9.6,0.048,pass,case says about 9.6 crore; within 0.5%
+summer share of revenue,0.4817,0.48,0.002,pass,within 0.2 points
+summer share MPB,0.38,0.38,0.001,pass,
+summer share GC,0.1999,0.2,0.001,pass,
+summer share PP,0.1599,0.16,0.001,pass,
+summer share DB,0.1399,0.14,0.001,pass,
+summer share DP,0.1203,0.12,0.001,pass,
+summer share C_GT,0.55,0.55,0.001,pass,
+summer share C_MT,0.25,0.25,0.001,pass,
+summer share C_QC,0.2,0.2,0.001,pass,
+lost revenue summer 2026 (INR crore),45.7221,46.08,0.5,pass,
+write-offs + discounts MPB/GC 2026 (INR crore),6.0048,6.0,0.1,pass,
+passionfruit cover 11 May 2026 (days),13.9844,14.0,0.3,pass,
+"old-forecast error, flavor x depot, monthly",0.3096,0.3,0.015,pass,
+measured sales growth Jul25-Jun26 vs Jul24-Jun25,0.1485,0.15,0.005,pass,follows the logarithmic path 45 -> 15%
+max weekly plant production (crore/month equivalent),2.5,2.5,0.0001,pass,never above plant capacity
+max co-packer volume (share of plant volume),0.1,0.1,0.0001,pass,never above 10% (F20)
+summer 2026 plant utilisation,0.9417,0.95,0.05,pass,case: about 95%
+"inventory ledger identity, max error (units)",1.0,0.0,6.0,pass,rounding of 6 terms
+"demand identity ordered = sold + lost, max error",1.0,0.0,1.0,pass,
+no negative stock or sales,0.0,0.0,1.0,pass,
+"DP quick-commerce demand, week of 30 Mar vs week of 9 Mar",3.8706,4.0,0.8,pass,viral 4x (F53); temperature and noise move it a little

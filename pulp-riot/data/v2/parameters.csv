@@ -1,0 +1,48 @@
+﻿parameter,value,unit,data_source,reason
+annual_revenue_jul25_jun26,1200,INR crore,Given,F01; read as the 12 months ending with last summer
+avg_price,60.0,INR/bottle,Given,F26
+contribution_margin,0.32,share,Given,F02; unit cost = price x 0.68
+summer_share_of_revenue,0.48,share,Given,F18
+summer_bottles_2026,9.6,crore,Given,F31
+flavor_shares_summer_2026,38/20/16/14/12,%,Given,F09-F13
+channel_shares_summer_2026,55/25/20,%,Given,F23-F25
+plant_capacity,2.5,crore bottles/month,Given,F32
+copacker_capacity,"10% of plant volume, +25% cost, 14 days notice",-,Given,F20-F22; called when weekly orders exceed plant capacity (Assumed rule)
+forecast_error,0.3,"MAPE, flavor x depot, monthly",Given,F28; calibration target
+lost_revenue_summer_2026,46.08,INR crore,Derived,8% x 576 (F61)
+writeoffs_discounts_2026,6.0,INR crore,Given,"F60; MPB + GC, Mar-Jul 2026"
+passionfruit_cover_11_may_2026,14,days,Given,F43
+air_freight_2026,3.2,INR crore,Given,F56
+growth_rate_FY2022,0.45,share,Assumed,logarithmic decline 45% -> 15% over 5 years (user decision)
+growth_rate_FY2023,0.3208,share,Assumed,logarithmic decline 45% -> 15% over 5 years (user decision)
+growth_rate_FY2024,0.2452,share,Assumed,logarithmic decline 45% -> 15% over 5 years (user decision)
+growth_rate_FY2025,0.1916,share,Assumed,logarithmic decline 45% -> 15% over 5 years (user decision)
+growth_rate_FY2026,0.15,share,Assumed,logarithmic decline 45% -> 15% over 5 years (user decision)
+temperature_north,14.5/17.5/23.0/29.0/33.0/33.5/31.0/30.0/29.5/26.0/20.5/15.5,"deg C, Jan-Dec",Assumed (external reference),approximate IMD monthly means
+temperature_south,24.5/26.0/28.0/30.0/31.0/29.5/28.5/28.0/28.0/27.0/25.5/24.5,"deg C, Jan-Dec",Assumed (external reference),approximate IMD monthly means
+temperature_east,19.5/23.0/27.5/30.0/30.5/30.0/29.5/29.3/29.0/27.5/23.5/20.0,"deg C, Jan-Dec",Assumed (external reference),approximate IMD monthly means
+temperature_west,22.0/23.5/26.5/29.0/30.5/29.5/28.0/27.5/28.0/28.5/26.0/23.0,"deg C, Jan-Dec",Assumed (external reference),approximate IMD monthly means
+monsoon_damping,1/1/1/1/1/0.9/0.58/0.55/0.68/0.9/1/1,"factor, Jan-Dec",Assumed,juice demand falls in the rains
+season_floor,0.15,share of peak,Assumed,winter demand floor
+season_t0,27.65,deg C,Calibrated,temperature at which demand is halfway to the plateau; set so Mar-Jun = 48%
+season_slope,2.72,deg C,Calibrated,steepness of the temperature response
+trend_growth_FY2026,0.2056,share,Calibrated,underlying FY2026 trend; set so MEASURED sales growth is 15% (the DP launch adds the rest)
+depot_size_weights,1.15/0.95/1.0/0.85/0.9/0.8/1.25/1.1/1.0,relative,Assumed,case gives no depot volumes
+qc_share_path,0.12 -> 0.2,share,Assumed / Given,quick commerce grows to the case's 20%
+monthly_noise_sigma,0.217,log-sd,Calibrated,set so the old forecast scores 30% error (F28)
+daily_noise_sigma,0.1,log-sd,Assumed,day-to-day variation
+dp_launch_plan,0.03,share of depot volume,Assumed,launch allocation in March 2026
+dp_shortfall_recognised,0.01,share,Calibrated,share of last month's DP shortfall planners add back when re-planning; sets lost sales to 0.768 cr
+dp_cannibalisation,0.47,share,Calibrated,MPB/GC demand lost to DP in North/West; sets write-offs to INR 6 cr
+passionfruit_target_cover,15.58,days,Calibrated,procurement's cover target; gives 14 days on 11 May
+pp_cut_in_closure,0.9,share,Assumed,size of the Passionfruit Punch cut (F58)
+air_freight_size,4,days of passionfruit use,Assumed,"arrives 28 May; too small to prevent the run-out (F44, F59)"
+constrained_fruits,passionfruit/dragonfruit,-,Given,"only these can limit production: single cooperative and road (F35, F41); quarterly imports (F17)"
+south_east_boost,0.15,x North/West loss,Assumed,MPB/GC demand shift toward South/East after the launch
+discount_on_aged_stock,0.081,share of price,Calibrated,aged stock sold to general trade; sets write-offs + discounts to INR 6 cr
+gt_max_age,80.0,days,Assumed,general trade refuses older stock; then written off
+pulp_kg_per_bottle,0.06,kg,Assumed,only ratios matter for days of cover
+p80_multiplier,1.3164,x P50,Derived / Assumed,1 + 0.8416 x 30% / 0.7979 (normal errors)
+cover_target_depot,21,days,Given,F45
+dp_flavor_multipliers_2026,1.313/1.193/1.179/0.952/1.389,x,Calibrated,2026 mix scaling to hit 38/20/16/14/12
+channel_multipliers_2026,1.191/1.191/1.115,x,Calibrated,2026 channel scaling to hit 55/25/20

@@ -1,0 +1,81 @@
+﻿fact_id,fact,value,unit,page,module
+F01,Annual revenue,1200,INR crore,1,General
+F02,Contribution margin,32,%,1,General
+F03,Number of plants,2,count,1,Supply
+F04,Number of co-packers,1,count,1,Supply
+F05,Number of depots,9,count,1,Distribution
+F06,Depots sit in this many regions,4,count,2,Distribution
+F07,"About 600 general-trade distributors, plus modern-trade retailers and quick-commerce dark stores, are served by the depots",600,distributors,1,Distribution
+F08,Number of flavors,5,count,1,General
+F09,Mango Peach Basil share of summer volume,38,%,1,Demand
+F10,Guava Chilli share of summer volume,20,%,1,Demand
+F11,Passionfruit Punch share of summer volume,16,%,1,Demand
+F12,Dragonfruit Bloom share of summer volume,14,%,1,Demand
+F13,Dragon Passion share of summer volume (new blend of dragonfruit + passionfruit pulp),12,%,1,Demand
+F14,Dragonfruit pulp that is domestic,60,%,1,Supply
+F15,Dragonfruit pulp that is imported,40,%,1,Supply
+F16,Imported dragonfruit pulp lead time,6-8,weeks,1,Supply
+F17,Imported dragonfruit pulp is ordered once a quarter,quarterly,frequency,2,Supply
+F18,Peak summer (March-June) share of annual revenue,48,%,1,Demand
+F19,Plants cannot add mid-season lines (summer capacity is fixed),fixed,constraint,1,Supply
+F20,Co-packer can add up to this much extra volume,10,%,2,Supply
+F21,Co-packer cost premium per bottle vs in-house,25,%,2,Supply
+F22,Co-packer needs this much notice,2,weeks,2,Supply
+F23,General trade share of summer volume,55,%,1,Demand
+F24,Modern trade share of summer volume,25,%,1,Demand
+F25,Quick commerce share of summer volume,20,%,1,Demand
+F26,Average realized price,60,INR/bottle,1,General
+F27,Forecasts are updated,monthly,frequency,1,Demand
+F28,Average forecast error at flavor and depot level,30,%,1,Demand
+F29,Quick-commerce platforms send sell-through reports to marketing,daily,frequency,1,Demand
+F30,Planners receive consolidated sales data,month-end,frequency,1,Demand
+F31,Summer volume,9.6,crore bottles,2,General
+F32,Two plants can make together,2.5,crore bottles/month,2,Supply
+F33,Plant utilization through the summer,95,%,2,Supply
+F34,Procurement targets are set on price per kilogram,price/kg,rule,2,Supply
+F35,No second passionfruit supplier has been qualified,0,suppliers,2,Supply
+F36,Marketing informed procurement of Dragon Passion launch this long before launch,2,weeks,2,Supply
+F37,Frozen pulp keeps up to this long in plant cold storage,6,months,2,Inventory
+F38,Bottled juice shelf life,90,days,2,Inventory
+F39,Modern trade and quick commerce reject stock with less than this many days left,60,days,2,Inventory
+F40,Passionfruit pulp normally reaches plants by road in,3,days,2,Transportation
+F41,No alternative road route from the passionfruit cooperative,none,constraint,2,Transportation
+F42,Highway closed for at least a week in this many of the last 5 summers,3,of 5 summers,2,Transportation
+F43,Plants held about this much passionfruit pulp when the May closure began,2,weeks,2,Inventory
+F44,Air freight was booked in the closure's,2nd,week,2,Transportation
+F45,Each depot holds about this much cover for every flavor,3,weeks,2,Inventory
+F46,Depot cover is based on the previous year's flavor mix,prior-year mix,rule,2,Inventory
+F47,Depot allocations are reset,monthly,frequency,2,Distribution
+F48,Each depot reports stock in its own spreadsheet,weekly,frequency,2,Inventory
+F49,Depot-to-depot transfer takes,2-4,days,2,Distribution
+F50,Depot-to-depot transfer cost,1.50,INR/bottle,2,Distribution
+F51,Dragon Passion launched,early March,date,2,Demand
+F52,Influencer reel went viral this long after launch,2,weeks,2,Demand
+F53,Quick-commerce orders rose this many times over the next two weeks,4,x,2,Demand
+F54,Planners saw the spike only when distributors and retailers reported shortages,late,signal,2,Demand
+F55,Landslides closed the only highway from the passionfruit cooperative in May for,3,weeks,2,Transportation
+F56,Air-freight spend,3.2,INR crore,2,Transportation
+F57,Air freight cost vs normal,5,x,2,Transportation
+F58,Passionfruit Punch production was cut to protect Dragon Passion,cut,action,2,Supply
+F59,Company still ran out of both Passionfruit Punch and Dragon Passion,stock-out,outcome,2,Inventory
+F60,Write-offs and discounts from Mango Peach Basil and Guava Chilli overstock,6,INR crore,2,Inventory
+F61,Share of summer revenue lost to stock-outs,8,%,2,Inventory
+F62,Rival launched a dragonfruit-passionfruit drink within this long of the stock-outs,6,weeks,2,Demand
+F63,Planners working in spreadsheets,15,planners,3,General
+F64,No data or AI team,0,team,3,General
+F65,IT is run by vendors,vendor,constraint,3,General
+F66,Earlier digital pilots that stalled after go-live,2,pilots,3,General
+F67,Peak-season trade-offs are escalated to the,COO,role,3,General
+F68,S&OP meeting is held,monthly,frequency,3,General
+F69,Total first-year budget (one-time build + first-year running),2.5,INR crore,3,General
+F70,No general-trade outlet data,none,constraint,3,Demand
+F71,A stakeholder approves every recommendation the model makes,human,constraint,3,General
+F72,Next summer is this far away,8,months,3,General
+F73,Mango pulp comes from contracted processors,contracted,source,1,Supply
+F74,Peach pulp comes from hill-state orchards,hill-state,source,1,Supply
+F75,"Fresh basil from contract farms near the plant, pressed into extract on site",on-site,source,1,Supply
+F76,Guava pulp comes from two regional suppliers,2,suppliers,1,Supply
+F77,Passionfruit Punch depends on a single hill-region cooperative,1,supplier,1,Supply
+F78,Dragon Passion uses both dragonfruit and passionfruit pulp,both,ingredients,1,Supply
+F79,Deck limit (including opening and closing slides),10,slides,5,Competition
+F80,Time to submit,42,hours,5,Competition

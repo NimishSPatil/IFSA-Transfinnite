@@ -1,0 +1,18 @@
+﻿check_id,description,formula,computed,expected,status,note
+C01,Annual bottles from revenue and price,1200 cr / INR 60,20.0,20 crore,insight,Derived annual volume: 20 crore bottles
+C02,Summer bottles = 48% of annual,20 cr x 48%,9.6,9.6 crore (F31),pass,Matches the stated 9.6 crore
+C03,Four months of plant capacity,4 x 2.5 cr,10.0,10 crore,insight,
+C04,Utilization implied by 9.6 cr,9.6 / 10,96.0,95.0% (F33),pass,96% vs stated 95%: within rounding of 'about 9.6 crore'
+C05,Flavor shares add to 100%,38+20+16+14+12,100.0,100,pass,
+C06,Channel shares add to 100%,55+25+20,100.0,100,pass,
+C07,Dragonfruit domestic + imported,60+40,100.0,100,pass,
+C08,Summer revenue,1200 x 48%,576.0,576 crore,insight,
+C09,Revenue lost to stock-outs,8% x 576,46.08,~46 crore,insight,The brief's own figure (~46 crore); basis assumed to be summer revenue
+C10,Bottles lost to stock-outs,46.08 cr / INR 60,0.768,~0.77 crore,insight,"8% of the 9.6 crore sold, so potential demand was about 10.4 crore vs 10 crore of plant capacity"
+C11,Contribution lost on stock-outs,46.08 x 32%,14.7456,~14.7 crore,insight,Margin view of the revenue loss
+C12,Normal air-freight cost implied,3.2 cr / 5,0.64,0.64 crore,insight,What the same pulp would have cost by road
+C13,Pulp cover vs closure length,21 days - 14 days,7.0,7 days uncovered,flag,"Cover was about 2 weeks; closure ran 3 weeks. Expected to cause a stock-out, matching F59"
+C14,Usable shelf life at MT/QC after production,90 - 60,30.0,30 days,insight,A depot holding 21 days of cover leaves only about 9 days of margin before MT/QC reject the stock
+C15,Co-packer ceiling,10% x 2.5 cr x 4 months,1.0,1.0 crore,insight,"Co-packer can add about 1.0 crore bottles over the summer, versus ~0.77 crore lost: tight but not impossible"
+C16,Imported lead time vs ordering cycle,6-8 weeks vs quarterly,56.0,<= 91 days,pass,One quarterly order is inside a 6-month pulp life but gives no room to react to a demand jump
+C17,Viral peak vs when planners see the data,30 Mar peak vs 31 Mar month-end,1.0,after the peak,flag,Planners get consolidated data a day after the peak; trade had already reported shortages (F54)

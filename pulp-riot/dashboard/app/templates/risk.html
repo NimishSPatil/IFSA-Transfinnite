@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Supply risk engine · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() %}
+{% set P = B.planned %}
+{% set pf = P.ing.passionfruit %}
+{% set dfr = P.ing.dragonfruit %}
+{% set H = ctl['g06']|int %}
+{% set back = '/risk' ~ q %}
+
+<h1>Supply risk engine</h1>
+<p class="sub">Daily pulp balance for the next {{ H }} days from {{ P.K.strftime('%a %d %b %Y') }}, the {{ rk_all|length }} risk rules, and the options
+  for each shortage, compared on the same horizon. Every recommendation is a review candidate.</p>
+{{ ui.scen_banner() }}
+
+{% if P.closures %}
+<div class="banner warn">{% for c in P.closures %}<b>Passionfruit highway closed {{ c.start|day }}–{{ c.end|day }}</b> — {{ c.note }}.{{ ' ' if not loop.last }}{% endfor %}
+  Road orders due inside the closure are held until it reopens.</div>
+{% endif %}
+
+<div class="stats">
+  <div class="stat {% if pf.first_unsafe %}alert{% endif %}">
+    <div class="v">{{ pf.first_unsafe|day if pf.first_unsafe else 'Safe' }}</div>
+    <div class="k">Passionfruit first unsafe day {{ ui.tagd(ctl.tag('g05', 'f04', 'b02')) }}</div>
+    <div class="d">{% if pf.first_out %}runs out <b>{{ pf.first_out|day }}</b> · {% endif %}cover {{ '%.1f'|format(pf.cover) }} days now</div>
+  </div>
+  <div class="stat {% if dfr.first_unsafe %}alert{% endif %}">
+    <div class="v">{{ dfr.first_unsafe|day if dfr.first_unsafe else 'Safe' }}</div>
+    <div class="k">Dragonfruit first unsafe day {{ ui.tagd(ctl.tag('g05', 'f04', 'a02')) }}</div>
+    <div class="d">{% if dfr.first_out %}runs out <b>{{ dfr.first_out|day }}</b> · {% endif %}cover {{ '%.1f'|format(dfr.cover) }} days now</div>
+  </div>
+  <div class="stat {% if rk_sum.get('Triggered') %}alert{% endif %}">
+    <div class="v">{{ rk_sum.get('Triggered', 0) }} <span class="small muted" style="font-weight:600">of {{ rk_all|length }}</span></div>
+    <div class="k">Risks triggered</div>
+    <div class="d">{{ rk_sum.get('Watch', 0) }} watch · {{ rk_sum.get('Structural', 0) }} structural · {{ rk_sum.get('Not evaluable', 0) }} not evaluable</div>
+  </div>
+  <div class="stat {% if m.winner %}warn{% endif %}">
+    <div class="v" style="font-size:16px;line-height:1.25">{{ m.winner.name if m.winner else ('No shortage' if not m.need else 'No option pays') }}</div>
+    <div class="k">Pathway C recommendation (PP, DB, DP)</div>
+    <div class="d">{% if m.rec %}{{ ui.status(m.rec.status) }}{% else %}nothing to approve{% endif %}</div>
+  </div>
+</div>
+
+{# ------------------------------------------------------------ material balance #}
+<div class="card" id="balance">
+  <h2>Material balance · {{ ing }}</h2>
+  <div class="chips" style="margin-bottom:10px">
+    {% for r in rows %}
+      <a class="chip {% if r.ing == ing %}on{% endif %}{% if r.r.first_unsafe and r.ing != ing %} danger{% endif %}" href="{{ q }}&ing={{ r.ing }}#balance">{{ r.ing|capitalize }}</a>
+    {% endfor %}
+  </div>
+  {% set r = P.ing[ing] %}
+  {{ charts.balance_chart(P.days, r.closing, B.confirmed_only.ing[ing].closing, r.safety, r.confirmed, r.planned, r.extra, P.closures, r.first_unsafe, unc=r.closing_unc)|safe }}
+  <div class="legend-inline" style="flex-wrap:wrap">
+    <span><span class="sw" style="background:#2251FF"></span>Pulp in stock, with normal standing orders</span>
+    <span><span class="sw" style="background:#64748b"></span>Confirmed orders only (dashed)</span>
+    <span><span class="sw" style="background:#b91c1c"></span>Pulp missing vs plan (dashed)</span>
+    <span><span class="sw" style="background:#051C2C;opacity:.55"></span>Confirmed arrivals</span>
+    <span><span class="sw" style="background:#00A9F4;opacity:.55"></span>Planned arrivals (not confirmed)</span>
+    <span><span class="sw" style="background:#fee2e2;border:1px solid #fca5a5"></span>Road closed</span>
+  </div>
+  <div class="hint">Closing = opening + confirmed + planned − use. Opening = both plants' pulp at the end of the as-of week, pooled (A41){% if ctl['b09'] %}, less {{ '%.0f'|format(ctl['b09'] * 100) }}% held (b09){% endif %}.
+    Use = production to the P{{ ctl['f04']|int }} forecast, capped by plant capacity. Overdue and not-shipped orders are not counted (R12).
+    The red dashed line is pulp the plan needed and did not have: production of the flavors that use it stops, and the engine shares what arrives (pro rata under "no action").</div>
+</div>
+
+<div class="card">
+  <h2>All ingredients · first unsafe day and the fastest lever</h2>
+  <div class="scroll-x">
+  <table class="tbl">
+    <thead><tr><th>Ingredient</th><th class="num">On hand</th><th class="num">Cover</th><th class="num">Confirmed in</th><th class="num">Planned in</th>
+      <th>First unsafe · P{{ ctl['f04']|int }}</th><th>· P{{ ctl['f03']|int }}</th><th>· confirmed only</th><th>Fastest lever</th><th class="num">Lead-time gap</th></tr></thead>
+    <tbody>
+    {% for x in rows %}
+      <tr>
+        <td><a href="{{ q }}&ing={{ x.ing }}#balance"><b>{{ x.ing|capitalize }}</b></a></td>
+        <td class="num">{{ '{:,.0f}'.format(x.r.open) }} kg</td>
+        <td class="num">{{ '%.1f'|format(x.r.cover) if x.r.cover else '–' }} d</td>
+        <td class="num">{{ '{:,.0f}'.format(x.r.confirmed.sum()) }}</td>
+        <td class="num muted">{{ '{:,.0f}'.format(x.r.planned.sum()) }}</td>
+        <td>{% if x.r.first_unsafe %}<span class="tag hot">{{ x.r.first_unsafe|day }}</span>{% else %}<span class="tag cold">safe</span>{% endif %}</td>
+        <td>{% if x.stress.first_unsafe %}<span class="tag warm">{{ x.stress.first_unsafe|day }}</span>{% else %}<span class="muted small">safe</span>{% endif %}</td>
+        <td>{% if x.conf.first_unsafe %}<span class="tag warm">{{ x.conf.first_unsafe|day }}</span>{% else %}<span class="muted small">safe</span>{% endif %}</td>
+        <td class="small">{% if x.lever %}{{ x.lever.name }} · {{ '%g'|format(x.lever.lead) }} d{% else %}<span class="muted">none available</span>{% endif %}</td>
+        <td class="num">{% if x.gap is not none %}<b style="color:{{ 'var(--danger)' if x.gap < 0 else 'inherit' }}">{{ '%+d'|format(x.gap) }} d</b>{% else %}–{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="hint">Lead-time gap = days until the first unsafe day − the fastest available lever's lead time. Negative: that lever is already too late.
+    Safety buffer {{ ctl['g05']|int }} days of use (g05, Assumed). The P{{ ctl['f03']|int }} column stresses demand at the pulp percentile (f03).
+    {{ ui.src('Derived', 'material balance') }} {{ ui.src('Assumed', 'A41 pooled plants, A44 standing orders') }}</div>
+  {% set lv = rows|selectattr('ing', 'equalto', ing)|first %}
+  <details class="disclose mt12"><summary>Levers for {{ ing }}</summary><div class="body">
+    <table class="tbl"><thead><tr><th>Lever</th><th class="num">Lead time</th><th>Available now?</th><th>Source</th></tr></thead><tbody>
+    {% for l in lv.levers %}<tr><td>{{ l.name }}</td><td class="num">{{ ('%g d'|format(l.lead)) if l.lead is not none else '–' }}</td>
+      <td>{% if l.ok %}<span class="tag cold">yes</span>{% else %}<span class="tag muted">no</span> <span class="small muted">{{ l.why }}</span>{% endif %}</td>
+      <td class="small muted">{{ l.ref }}</td></tr>{% endfor %}
+    </tbody></table></div></details>
+</div>
+
+{# ------------------------------------------------------------ pathway C #}
+<div class="card" id="options">
+  <h2>Pathway C · passionfruit and dragonfruit flavors: compare and choose</h2>
+  {% if not m.need %}
+    <div class="placeholder"><b>No PP, DB or DP shortage inside the {{ H }}-day horizon.</b><br>The options table appears when pulp limits production.</div>
+  {% else %}
+  <p class="small" style="margin-top:0">Pulp limits PP, DB or DP production until <b>{{ m.end|day }}</b>. Each option is run through the same daily balance.
+    Contribution exposure = unmet bottles × ₹{{ '%.2f'|format(m.margin) }} {{ ui.tagd(ctl.tag('d05', 'd06')) }} — a uniform proxy, not a per-flavor margin and not avoided savings.</p>
+  <div class="scroll-x">
+  <table class="tbl">
+    <thead><tr><th>Option</th><th class="num">Lead</th><th class="num">Unmet PP</th><th class="num">DB</th><th class="num">DP</th>
+      <th class="num">Unmet total</th><th class="num">Extra cost</th><th class="num">Net vs no action</th><th>Verdict</th></tr></thead>
+    <tbody>
+    {% for o in m.options %}
+      <tr {% if o.winner %}class="win"{% endif %}>
+        <td><b>{{ o.name }}</b>{% if o.note %}<div class="small muted">{{ o.note }}</div>{% endif %}</td>
+        <td class="num">{{ ('%g d'|format(o.lead)) if o.lead is not none else '–' }}</td>
+        {% if o.unmet is not none %}
+          <td class="num">{{ o.by.PP|bottles }}</td><td class="num">{{ o.by.DB|bottles }}</td><td class="num">{{ o.by.DP|bottles }}</td>
+          <td class="num"><b>{{ o.unmet|bottles }}</b></td>
+          <td class="num">{{ o.cost|inr }}</td>
+          <td class="num"><b style="color:{{ 'var(--danger)' if o.net < 0 else 'inherit' }}">{{ o.net|inr }}</b></td>
+        {% else %}<td colspan="6" class="small muted">{{ o.why }}</td>{% endif %}
+        <td>{% if o.winner %}<span class="tag cold">recommended</span>
+            {% elif not o.feasible %}<span class="tag muted">not feasible</span>
+            {% elif not o.in_time %}<span class="tag warm">too late</span>
+            {% elif o.key == 'none' %}<span class="tag muted">baseline</span>
+            {% else %}<span class="tag muted">compared</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="hint">Choice rule: feasible, able to start before the first run-out ({{ m.first_out|day }}), highest net (contribution protected − extra cost); ties go to the cheaper, then the faster.
+    Air premium = kg × normal freight ₹{{ '%.0f'|format(m.nf) }}/kg × ({{ '%g'|format(ctl['a06']) }} − 1) — {{ m.nf_src }}.
+    The joint allocation is a linear program over the horizon with dated receipts (handoff 5.2).</div>
+  {% if m.rec %}
+    <div class="decision"><div class="small" style="margin-bottom:6px"><b>Recommendation:</b> {{ m.rec.title }}. {{ m.rec.detail }}</div>
+    {{ ui.review_form(m.rec, back ~ '#options') }}</div>
+  {% else %}
+    <div class="banner info mt12">No option protects more contribution than it costs; nothing goes to review. No action is the honest answer here.</div>
+  {% endif %}
+  {% endif %}
+  <details class="disclose mt12"><summary>Why "most bottles" is not automatically "best" (handoff 5.5, made-up numbers)</summary><div class="body small">
+    <p>3,000 kg passionfruit, 1,800 kg dragonfruit; unmet PP 40,000 and DP 80,000 bottles. Recomputed with the current recipe:</p>
+    <table class="tbl"><thead><tr><th>Mix</th><th class="num">PP</th><th class="num">DP</th><th class="num">Bottles</th><th class="num">PP fill</th></tr></thead><tbody>
+    {% for a in illus %}<tr><td>{{ a.mix }}</td><td class="num">{{ '{:,.0f}'.format(a.pp) }}</td><td class="num">{{ '{:,.0f}'.format(a.dp) }}</td>
+      <td class="num">{{ '{:,.0f}'.format(a.total) }}</td><td class="num">{{ '%.0f'|format(a.pp_fill * 100) }}%</td></tr>{% endfor %}
+    </tbody></table>
+    <p>More bottles, but Passionfruit Punch service falls. Set a floor with control g07 to protect it; the table above re-runs with it.</p>
+  </div></details>
+</div>
+
+<div class="cols">
+  {# ------------------------------------------------------------ pathway B #}
+  <div class="card" id="ladder">
+    <h2>Pathway B · guava supplier-switching ladder</h2>
+    <div class="timeline">
+      {% for s in gl.steps %}
+        <div class="tl-item {% if gl.step and s.n <= gl.step %}interaction{% endif %}">
+          <div class="tl-head">{{ s.n }}. {{ s.t }}</div>
+          <div class="tl-body">{{ s.d }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="banner {% if gl.rec %}warn{% else %}info{% endif %}" style="margin-bottom:8px">{{ gl.verdict }}</div>
+    <div class="hint">{{ gl.caution }} Test with b04 (outage days), b05 (supplier 1 share) and c01 (supplier 2's confirmed capacity).</div>
+    {% if gl.rec %}{{ ui.review_form(gl.rec, back ~ '#ladder') }}{% endif %}
+  </div>
+
+  {# ------------------------------------------------------------ pathway A #}
+  <div class="card">
+    <h2>Pathway A · Mango Peach Basil, three inputs</h2>
+    <table class="tbl">
+      <thead><tr><th>Input</th><th class="num">Cover</th><th>First unsafe</th><th class="num">Max MPB bottles*</th></tr></thead>
+      <tbody>{% for r in mpb.rows %}
+        <tr {% if r.ing == mpb.limiting %}class="win"{% endif %}><td><b>{{ r.ing|capitalize }}</b>{% if r.ing == mpb.limiting %} <span class="tag warm">limits</span>{% endif %}</td>
+          <td class="num">{{ '%.1f'|format(r.cover) }} d</td><td>{{ r.first_unsafe|day if r.first_unsafe else 'safe' }}</td>
+          <td class="num">{{ r.max_bottles|bottles }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    <div class="kv mt12">
+      <dt>MPB plan, {{ H }} days</dt><dd>{{ mpb.plan|bottles }}</dd>
+      <dt>Pulp-limited shortfall</dt><dd>{{ mpb.short|bottles if mpb.short else 'none' }}</dd>
+      <dt>MPB stock at depots</dt><dd>{{ '%.0f'|format(mpb.fg_days) if mpb.fg_days else '–' }} days of demand</dd>
+      <dt>Might switch flavor</dt><dd>{{ mpb.switch|bottles }} <span class="small muted">at d12 = {{ '%.0f'|format(ctl['d12'] * 100) }}% (a hypothesis)</span></dd>
+    </div>
+    <div class="hint">* Pulp on hand + confirmed + planned − buffer, ÷ the input's kg per bottle. {{ mpb.note }}</div>
+  </div>
+</div>
+
+{# ------------------------------------------------------------ replay #}
+<div class="card" id="replay">
+  <h2>Replay · the May 2026 closure, as the engine would have seen it</h2>
+  {% set rc = replay %}
+  <div class="kv">
+    <dt>Pre-season warning</dt><dd>{% if rc.pre_warning %}{{ rc.pre_warning|day }} — landslide season ahead and cover below a {{ ctl['b02']|int }}-day closure + buffer
+      (<b>{{ rc.pre_lead }} days</b> before the road shut){% else %}none raised{% endif %}</dd>
+    <dt>Closure detected</dt><dd>{{ rc.detected|day }} (the day it began; F55)</dd>
+    <dt>Passionfruit</dt><dd>{{ '%.1f'|format(rc.cover) }} days of cover; below buffer <b>{{ rc.first_unsafe|day }}</b>, runs out <b>{{ rc.first_out|day }}</b></dd>
+    <dt>Air had to be booked by</dt><dd><b>{{ rc.book_by|day }}</b> ({{ ctl['a05']|int }} days booking to arrival, a05){% if rc.booked %} — the sample booked it {{ rc.booked|day }},
+      {{ rc.book_gap }} days late (case: "in the closure's 2nd week", F44){% endif %}</dd>
+    <dt>Planning's month-end view</dt><dd>{{ rc.planning_sees|day }} (consolidated sales, F30)</dd>
+    <dt>Lead over month-end</dt><dd><b style="color:var(--accent-d)">{{ rc.lead }} days</b></dd>
+  </div>
+  <div class="hint">Runs the same engine as of week 4 May (known by Monday 11 May), using only data known then. Load the "May closure replay" preset to step through it.
+    Timing indicators, not a claim about what the ₹3.2 Cr of air freight could have saved. {{ ui.src('Derived', 'replay') }}</div>
+</div>
+
+{# ------------------------------------------------------------ register #}
+<div class="card" id="register">
+  <h2>Risk register · as of {{ P.K.strftime('%d %b %Y') }}</h2>
+  <div class="chips" style="margin-bottom:10px">
+    <a class="chip {% if st != 'all' %}on{% endif %}" href="{{ q }}&st=open#register">Needs attention · {{ rk_all|rejectattr('status', 'equalto', 'Clear')|list|length }}</a>
+    <a class="chip {% if st == 'all' %}on{% endif %}" href="{{ q }}&st=all#register">All {{ rk_all|length }}</a>
+  </div>
+  <div class="scroll-x">
+  <table class="tbl">
+    <thead><tr><th>ID</th><th style="min-width:180px">Risk</th><th>Status</th><th>Severity</th><th style="min-width:260px">Evidence</th><th>Fastest lever</th><th class="num">Gap</th><th>Owner</th></tr></thead>
+    <tbody>
+    {% for r in rk %}
+      <tr>
+        <td class="mono"><b>{{ r.id }}</b>{% if r.id >= 'R19' %} <span class="tag esc" title="added in prompt {{ 2 if r.id >= 'R28' else 1 }}">new</span>{% endif %}</td>
+        <td><b>{{ r.name }}</b><div class="small muted">{{ r.skus }} · {{ r.basis }}</div></td>
+        <td>{{ ui.status(r.status) }}</td>
+        <td>{{ ui.status(r.severity) }}</td>
+        <td class="small">{{ r.evidence }}</td>
+        <td class="small">{% if r.lever %}{{ r.lever.name }} ({{ '%g'|format(r.lever.lead) }} d){% else %}–{% endif %}</td>
+        <td class="num">{% if r.gap is not none %}<b style="color:{{ 'var(--danger)' if r.gap < 0 else 'inherit' }}">{{ '%+d'|format(r.gap) }}</b>{% else %}–{% endif %}</td>
+        <td class="small">{{ r.owner }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="hint">R01–R18 from the handoff; R19–R27 added in prompt 1; R28–R31 (inventory module) in prompt 2. "Not evaluable" means the data does not exist — each has a scenario control to test it.
+    Structural = a standing exposure from case facts, not an event.</div>
+</div>
+
+<div class="cols">
+  <div class="card" id="pipeline">
+    <h2>Open pulp orders at {{ P.K.strftime('%d %b') }}</h2>
+    <table class="tbl"><thead><tr><th>Ingredient</th><th>Mode</th><th class="num">kg</th><th>ETA</th></tr></thead><tbody>
+      {% for c in P.conf|sort(attribute='eta') %}<tr><td>{{ c.ing }}</td><td>{{ c.mode }}</td><td class="num">{{ '{:,.0f}'.format(c.kg) }}</td>
+        <td>{{ c.eta|day }}{% if c.held %} <span class="tag warm">held by closure</span>{% endif %}</td></tr>
+      {% else %}<tr><td colspan="4" class="muted">No open orders.</td></tr>{% endfor %}
+    </tbody></table>
+    {% if P.excluded %}
+      <div class="small muted" style="font-weight:700;margin:12px 0 6px">NOT COUNTED AS SUPPLY (R12)</div>
+      {% for e in P.excluded %}<div class="small">{{ e.ing }} {{ '{:,.0f}'.format(e.kg) }} kg — {{ e.why }}</div>{% endfor %}
+    {% endif %}
+    <div class="hint">Counted only if placed by {{ P.K|day }}, not yet received and due on or after it. Sea +{{ ctl['a09']|int }} d, road +{{ ctl['a10']|int }} d (scenario delays).</div>
+  </div>
+
+  {# ------------------------------------------------------------ supply -> inventory interface #}
+  <div class="card">
+    <h2>What this means for depot stock (Supply → Inventory)</h2>
+    <table class="tbl"><thead><tr><th>Flavor</th><th class="num">Stock at depots</th><th class="num">MT/QC ok</th><th class="num">Cover</th><th>National stock runs out</th></tr></thead><tbody>
+      {% for k, f in fg.items() %}<tr><td><b>{{ k }}</b></td><td class="num">{{ f.on_hand|bottles }}</td>
+        <td class="num">{{ '%.0f'|format(f.mtqc_share * 100) ~ '%' if f.mtqc_share is not none else '–' }}</td>
+        <td class="num">{{ '%.0f'|format(f.cover) ~ ' d' if f.cover else '–' }}</td>
+        <td>{% if s2f[k].runs_out %}<span class="tag hot">{{ s2f[k].runs_out|day }}</span>{% else %}<span class="muted small">not in {{ H }} days</span>{% endif %}</td></tr>{% endfor %}
+    </tbody></table>
+    <div class="placeholder mt12"><b>Inventory module: coming in prompt 2.</b><br>This is the simple, pooled-national hand-off: stock + pulp-limited production − P50 demand.
+      Depot-level cover, allocation and transfers are deferred.</div>
+    <div class="hint">MT/QC ok = bottles young enough for modern trade and quick commerce ({{ ctl['g01']|int }} − {{ ctl['g02']|int }} days, F38/F39). {{ ui.src('Derived', 'inventory_iface') }}</div>
+  </div>
+</div>
+
+{% endblock %}

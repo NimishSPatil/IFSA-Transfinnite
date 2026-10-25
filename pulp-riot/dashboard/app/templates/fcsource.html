@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Forecast source · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() ~ '&win=' ~ win %}
+
+<h1>Forecast source</h1>
+<p class="sub">The teammate's P50/P80 are static (last year's same month and mix). The dashboard's forecast (prompt 1) is rebuilt every week from what was known the
+  Monday before. Side by side for the summer, national, all channels. Active source for the inventory views: <b>{{ 'File P50/P80' if ctl['f28'] == 'file' else 'Dashboard forecast (prompt 1)' }}</b>
+  (Control Panel f28).</p>
+{{ ui.scen_banner() }}
+{{ ui.inv_tabs('fcsource', win) }}
+{{ ui.win_chips(win, '/fcsource', only=['summer26', 'summer25']) }}
+
+<div class="card">
+  <h2>Summer totals by flavor · {{ WINDOWS[win][0] }}</h2>
+  <table class="tbl"><thead><tr><th>Flavor</th><th class="num">File P50</th><th class="num">Dashboard P50</th><th class="num">Difference</th></tr></thead><tbody>
+    {% for r in fc.by_sku %}<tr><td><b>{{ SKU_NAMES[r.sku] }}</b></td><td class="num">{{ r.file|bottles }}</td><td class="num">{{ r.dash|bottles }}</td>
+      <td class="num"><b style="color:{{ 'var(--danger)' if r.diff is not none and r.diff|abs > ctl['f29'] else 'inherit' }}">{{ (r.diff|pct) if r.diff is not none else '–' }}</b></td></tr>{% endfor %}
+  </tbody></table>
+  <div class="hint">{{ fc.n_weeks }} weeks. Differences above {{ '%.0f'|format(100 * ctl['f29']) }}% (f29) go to READ_ME. Dragon Passion stands out: the file's P50 inherits the 3%
+    launch allocation (G21), while the dashboard learns DP's real run-rate within weeks. Neither is claimed as accurate; this sample cannot validate either.</div>
+</div>
+
+<div class="card">
+  <h2>Compare and choose · which forecast feeds the inventory views</h2>
+  <table class="tbl"><thead><tr><th>Option</th><th>For</th><th>Against</th><th>Verdict</th></tr></thead><tbody>
+    <tr class="win"><td><b>File P50/P80 for loss and cover (default)</b></td><td>Reconciles to the handoff; the teammate's transfers were chosen on it</td>
+      <td>Static; understates Dragon Passion</td><td><span class="tag cold">chosen for the headline</span></td></tr>
+    <tr><td><b>Dashboard forecast</b></td><td>Updates weekly; sees the DP spike</td><td>Would change the loss definition and break reconciliation; the transfers were not chosen on it</td>
+      <td><span class="tag muted">shown side by side</span></td></tr>
+    <tr><td><b>Blend</b></td><td>—</td><td>Two definitions in one number</td><td><span class="tag muted">rejected</span></td></tr>
+  </tbody></table>
+</div>
+
+<div class="card">
+  <h2>Week by week · differences above {{ '%.0f'|format(100 * ctl['f29']) }}% <span class="count">{{ fc.big|length }}</span></h2>
+  <div class="scroll-x"><table class="tbl"><thead><tr><th>Week of</th><th>Flavor</th><th class="num">File P50</th><th class="num">Dashboard P50</th><th class="num">Difference</th></tr></thead><tbody>
+    {% for r in fc.big %}<tr><td>{{ r.week|day }}</td><td>{{ r.sku }}</td><td class="num">{{ r.file|bottles }}</td><td class="num">{{ r.dash|bottles }}</td>
+      <td class="num">{{ r.diff|pct if r.diff is not none else '–' }}</td></tr>{% else %}<tr><td colspan="5" class="muted">None.</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+{% endblock %}

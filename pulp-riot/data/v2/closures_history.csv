@@ -1,0 +1,6 @@
+﻿year,closed,start,end,days,data_source
+2022,N,,,0,Assumed (which 3 of the 5 summers closed)
+2023,N,,,0,Assumed
+2024,Y,2024-06-03,2024-06-09,7,Assumed: at least a week (F42)
+2025,Y,2025-05-19,2025-05-28,10,Assumed: at least a week (F42)
+2026,Y,2026-05-11,2026-05-31,21,Given: 3 weeks in May (F55); start day Assumed

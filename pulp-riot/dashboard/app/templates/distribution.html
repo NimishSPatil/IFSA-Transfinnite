@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Distribution · PulpSense{% endblock %}
+{% block content %}
+{% set k = v.kpi %}
+{% set CH = {'C_GT': 'General trade', 'C_MT': 'Modern trade', 'C_QC': 'Quick commerce'} %}
+
+<h1>Distribution</h1>
+<p class="sub">Where finished stock went — plants to depots to channels — and whether it ended up where the demand was. Week of {{ week.strftime('%d %B %Y') }}.</p>
+
+<div class="stats">
+  <div class="stat">
+    <div class="v">{{ k.shipped|bottles }}</div>
+    <div class="k">Bottles shipped to depots this week</div>
+    <div class="d">{% if k.cp_share > 0.001 %}{{ '%.0f'|format(k.cp_share * 100) }}% made by the co-packer{% else %}All from Plants 1 and 2{% endif %}</div>
+  </div>
+  <div class="stat {% if k.gap > 10 %}warn{% endif %}">
+    <div class="v">{{ '%.0f'|format(k.gap) }} days</div>
+    <div class="k">Cover gap between regions</div>
+    <div class="d">{{ k.hi }} {{ '%.0f'|format(k.hi_v) }} days · {{ k.lo }} {{ '%.0f'|format(k.lo_v) }} days</div>
+  </div>
+  <div class="stat {% if k.stranded > 0 %}alert{% endif %}">
+    <div class="v">{{ k.stranded|bottles }}</div>
+    <div class="k">Stock in the wrong place</div>
+    <div class="d">Bottles over 1.5× target at one depot while the same flavor is under 7 days at another (cover against actual sales)</div>
+  </div>
+  <div class="stat">
+    <div class="v">{{ k.x4 }}</div>
+    <div class="k">Depot-to-depot transfers · last 4 weeks</div>
+    <div class="d">{{ k.xall }} in the whole record so far · 2–4 days, about ₹{{ '%.2f'|format(ctl['a08']) }} a bottle (case F49, F50; a08)</div>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Flow · last 4 weeks</h2>
+    {{ charts.flow(v.flows.src, v.flows.reg, v.flows.reg_ch)|safe }}
+    <div class="hint">Left: who made the stock. Middle: bottles received by each region's depots. Right: bottles sold by channel. Hover a band for the number.</div>
+  </div>
+
+  <div class="card">
+    <h2>Shipped vs ordered, by region · last 4 weeks</h2>
+    <div class="bars">
+      {% for a in v.alloc %}
+      <div class="bar-row">
+        <div class="bl"><span><b>{{ a.region }}</b></span>
+          <span class="n">{{ '%.0f'|format(a.shipped * 100) }}% of shipments · {{ '%.0f'|format(a.ordered * 100) }}% of orders</span></div>
+        <div class="bar-track" style="height:7px;margin-bottom:3px"><div class="bar-fill" style="width:{{ a.shipped * 100 * 2.5 }}%;background:#2251FF"></div></div>
+        <div class="bar-track" style="height:7px"><div class="bar-fill" style="width:{{ a.ordered * 100 * 2.5 }}%;background:#b91c1c;opacity:.75"></div></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="legend-inline"><span><span class="sw" style="background:#2251FF"></span>Share of bottles shipped</span>
+      <span><span class="sw" style="background:#b91c1c;opacity:.75"></span>Share of bottles ordered</span></div>
+    <div class="hint">Allocations are reset monthly on last year's mix (case F46, F47); a region that gets a smaller share of shipments than of orders runs short.</div>
+
+    <h2 style="font-size:14px;margin-top:18px">Fill rate · region × channel, last 4 weeks</h2>
+    <table class="tbl">
+      <thead><tr><th>Region</th>{% for c in ['C_GT', 'C_MT', 'C_QC'] %}<th class="num">{{ CH[c] }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for r, row in v.fill.items() %}
+        <tr><td><b>{{ r }}</b></td>
+        {% for c in ['C_GT', 'C_MT', 'C_QC'] %}{% set f = row[c] %}
+          <td class="num" {% if f is not none and f < 0.9 %}style="color:var(--danger);font-weight:700"{% elif f is not none and f < 0.95 %}style="color:var(--warn);font-weight:700"{% endif %}>
+            {{ '%.0f'|format(f * 100) ~ '%' if f is not none else '–' }}</td>
+        {% endfor %}</tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Regional balance · days of cover against actual sales</h2>
+    <table class="tbl">
+      <thead><tr><th>Flavor</th>{% for r in ['North', 'South', 'East', 'West'] %}<th class="num">{{ r }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for s in v.live %}
+        <tr><td><b>{{ SKU_NAMES[s] }}</b></td>
+        {% for r in ['North', 'South', 'East', 'West'] %}{% set c = v.bal[s][r] %}
+          {% if c is none %}<td class="num">–</td>
+          {% else %}
+            {% set bg, fg = ('#7f1d1d', '#fff') if c < 0.5 else (('#fee2e2', '#b91c1c') if c < 7 else (('#fef3c7', '#b45309') if c < 15.75 else (('#ede9fe', '#6d28d9') if c > 31.5 else ('#EAF0FF', '#051C2C')))) %}
+            <td class="num" style="background:{{ bg }};color:{{ fg }};font-weight:700">{{ '%.0f'|format(c) }}</td>
+          {% endif %}
+        {% endfor %}</tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="hint">Region stock ÷ average daily sales over the last 4 weeks (actual sales, not the forecast). Red under 7 days, amber low, blue on target, purple overstock (over 1.5× the {{ v.target }}-day target, g04).</div>
+  </div>
+
+  <div class="card">
+    <h2>Mismatches this week <span class="count">{{ v.mism_n }}</span></h2>
+    {% if v.mism %}
+    <div class="scroll-x">
+    <table class="tbl">
+      <thead><tr><th>Flavor</th><th>Surplus at</th><th>Short at</th><th class="num">Bottles</th><th class="num">Transfer cost</th></tr></thead>
+      <tbody>
+      {% for m in v.mism %}
+        <tr><td>{{ SKU_NAMES[m.sku] }}</td>
+          <td>{{ m.from_d }} <span class="small muted">{{ m.from_r }}</span></td>
+          <td>{{ m.to_d }} <span class="small muted">{{ m.to_r }} · {{ '%.0f'|format(m.to_cover) }} d</span>{% if m.same_region %} <span class="tag cold">same region</span>{% endif %}</td>
+          <td class="num">{{ m.units|bottles }}</td>
+          <td class="num">{{ m.cost|inr }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="hint">Facts, not recommendations: each row is surplus stock (over 1.5× the {{ v.target }}-day target, measured against actual sales) of a flavor at one depot while another depot is under 7 days of the same flavor. A transfer takes 2–4 days at about ₹{{ '%.2f'|format(ctl['a08']) }} a bottle; it does not check stock age or the 60-day retailer cutoff. Transfer recommendations belong to the Inventory module (prompt 2).</div>
+    {% else %}
+    <div class="placeholder"><b>No mismatches this week.</b><br>No flavor is in surplus at one depot while under 7 days at another.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

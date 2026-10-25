@@ -1,0 +1,78 @@
+{# shared macros: source tags, status chips, the review form #}
+
+{% macro src(kind, ref='') -%}
+{%- set k = (kind or 'Derived')[:1]|upper -%}
+<span class="src {{ k|lower }}" title="{{ {'G': 'Given (case fact)', 'D': 'Derived', 'A': 'Assumed', 'S': 'Simulated'}.get(k, kind) }}{% if ref %} · {{ ref }}{% endif %}">{{ k }}{% if ref %} <i>{{ ref }}</i>{% endif %}</span>
+{%- endmacro %}
+
+{% macro tagd(t) -%}{{ src(t.src, t.refs) }}{%- endmacro %}
+
+{% macro status(s) -%}
+{%- set c = {'Pending': 'muted', 'Approved': 'cold', 'Rejected': 'hot', 'Deferred': 'warm', 'Escalated': 'esc',
+             'Triggered': 'hot', 'Watch': 'warm', 'Structural': 'esc', 'Clear': 'cold', 'Not evaluable': 'muted',
+             'High': 'hot', 'Medium': 'warm', 'Low': 'muted', 'Open': 'muted'} -%}
+<span class="tag {{ c.get(s, 'muted') }}">{{ 'Escalated to COO' if s == 'Escalated' else s }}</span>
+{%- endmacro %}
+
+{% macro review_form(rec, back) %}
+<div class="review">
+  <div class="review-head">
+    <span class="small muted">Review candidate <code>{{ rec.id }}</code> · owner {{ rec.owner }}</span>
+    {{ status(rec.status or 'Pending') }}
+  </div>
+  {% if rec.decision %}
+    <div class="small" style="margin:6px 0 8px"><b>{{ rec.decision.status }}</b> by {{ rec.decision.role }} on {{ rec.decision.ts[:16]|replace('T', ' ') }}:
+      “{{ rec.decision.rationale }}”</div>
+  {% endif %}
+  <form method="post" action="/review">
+    <input type="hidden" name="rec_id" value="{{ rec.id }}">
+    <input type="hidden" name="title" value="{{ rec.title }}">
+    <input type="hidden" name="back" value="{{ back }}">
+    <div class="pills sm">
+      {% for s, l in [('Approved', 'Approve'), ('Rejected', 'Reject'), ('Deferred', 'Defer'), ('Escalated', 'Escalate to COO')] %}
+        <input type="radio" id="{{ rec.id }}-{{ s }}" name="status" value="{{ s }}" required>
+        <label for="{{ rec.id }}-{{ s }}">{{ l }}</label>
+      {% endfor %}
+    </div>
+    <div class="review-row">
+      <select name="role" aria-label="Your role" required>
+        {% for r in ROLES %}<option value="{{ r }}" {% if r == rec.owner %}selected{% endif %}>{{ r }}</option>{% endfor %}
+      </select>
+      <input type="text" name="rationale" required minlength="5" placeholder="Rationale (required)" aria-label="Rationale">
+      <button class="btn sm primary" type="submit">Record decision</button>
+    </div>
+    <div class="hint">Recording a decision does not place an order, change production or move stock (case F71). It is logged with your rationale.</div>
+  </form>
+</div>
+{% endmacro %}
+
+{% macro inv_tabs(active, win) %}
+<div class="tabs" role="tablist">
+  {% for k, l in [('rebalance', 'Rebalancing'), ('link', 'Supply ↔ Inventory'), ('overstock', 'Overstock & aging'), ('fcsource', 'Forecast source')] %}
+    <a class="{{ 'on' if k == active }}" href="/{{ k }}?asof={{ week.isoformat() }}&win={{ win }}">{{ l }}</a>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro win_chips(win, path, only=None) %}
+<div class="chips" style="margin-bottom:12px;align-items:center">
+  <span class="small muted" style="font-weight:700;margin-right:4px">WINDOW</span>
+  {% for k, v in WINDOWS.items() %}{% if not only or k in only %}
+    <a class="chip {{ 'on' if k == win }}" href="{{ path }}?asof={{ week.isoformat() }}&win={{ k }}">{{ v[0] }}{% if k == 'summer26' %} · default{% endif %}</a>
+  {% endif %}{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro cr(x) -%}{% if x is none %}–{% else %}{{ '−' if x < -5e4 else '' }}₹{{ '%.2f'|format((x|abs) / 1e7) }} Cr{% endif %}{%- endmacro %}
+
+{% macro share(x) -%}{% if x is none %}–{% elif x > 0.995 and x < 1 %}{{ '%.2f'|format(100 * x) }}%{% else %}{{ '%.1f'|format(100 * x) }}%{% endif %}{%- endmacro %}
+
+{% macro scen_banner() %}
+{% if n_changed %}
+<div class="banner {% if departures %}warn{% else %}info{% endif %}">
+  Scenario <b>{{ scen }}</b>: {{ n_changed }} control{{ 's' if n_changed != 1 }} changed from default{% if departures %},
+  <b>{{ departures|length }} departing from the case</b> ({% for d in departures %}{{ d.label }}{{ ', ' if not loop.last }}{% endfor %}){% endif %}.
+  <a href="/controls?asof={{ week.isoformat() }}">Control panel</a>
+</div>
+{% endif %}
+{% endmacro %}

@@ -1,0 +1,4 @@
+﻿item,value,unit,data_source,case_fact_id,notes
+Air freight of passionfruit pulp,3.2,INR crore,Given,F56,At 5x normal cost
+"Write-offs and discounts (Mango Peach Basil, Guava Chilli overstock)",6.0,INR crore,Given,F60,
+Revenue lost to stock-outs,46.08,INR crore,Derived,F61;F01;F18,8% x (48% x 1200) = 8% x 576; attribution to causes is a later step (A17)

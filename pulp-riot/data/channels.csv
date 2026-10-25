@@ -1,0 +1,4 @@
+﻿channel_id,name,summer_share,reporting_frequency,min_shelf_life_days,data_source,case_fact_id
+C_GT,General trade,0.55,month-end (consolidated),,Given,F23;F30
+C_MT,Modern trade,0.25,month-end (consolidated),60,Given,F24;F39
+C_QC,Quick commerce,0.2,daily to marketing; month-end to planners,60,Given,F25;F29;F39

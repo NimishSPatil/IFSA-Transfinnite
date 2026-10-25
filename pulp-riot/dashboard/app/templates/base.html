@@ -1,0 +1,94 @@
+{% set q = '?asof=' ~ week.isoformat() %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#051C2C">
+<title>{% block title %}PulpSense{% endblock %}</title>
+<link rel="stylesheet" href="/static/app.css?v={{ asset_v }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23051C2C'/><text x='16' y='21' font-size='13' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>PS</text></svg>">
+</head>
+<body>
+<div class="shell">
+
+  {% macro navlinks() %}
+    <div class="grp">Today</div>
+    <a class="nl {% if nav=='overview' %}on{% endif %}" href="/{{ q }}"><span class="ic">◉</span> Overview</a>
+    <a class="nl {% if nav=='readme' %}on{% endif %}" href="/readme{{ q }}"><span class="ic">☰</span> READ_ME
+      {% if rm_counts and rm_counts.Immediate %}<span class="badge">{{ rm_counts.Immediate }}</span>{% endif %}</a>
+
+    <div class="grp">The network</div>
+    <a class="nl {% if nav=='demand' %}on{% endif %}" href="/demand{{ q }}"><span class="ic">↗</span> Demand</a>
+    <a class="nl {% if nav=='supply' %}on{% endif %}" href="/supply{{ q }}"><span class="ic">◍</span> Supply</a>
+    <a class="nl {% if nav=='inventory' %}on{% endif %}" href="/inventory{{ q }}"><span class="ic">▦</span> Inventory</a>
+    <a class="nl {% if nav=='distribution' %}on{% endif %}" href="/distribution{{ q }}"><span class="ic">⇄</span> Distribution</a>
+    <a class="nl {% if nav=='transportation' %}on{% endif %}" href="/transportation{{ q }}"><span class="ic">⛟</span> Transportation</a>
+
+    <div class="grp">Inventory module</div>
+    <a class="nl {% if nav=='rebalance' %}on{% endif %}" href="/rebalance{{ q }}"><span class="ic">⇆</span> Rebalancing</a>
+    <a class="nl {% if nav=='link' %}on{% endif %}" href="/link{{ q }}"><span class="ic">⛓</span> Supply ↔ Inventory</a>
+    <a class="nl {% if nav=='overstock' %}on{% endif %}" href="/overstock{{ q }}"><span class="ic">▤</span> Overstock &amp; aging</a>
+    <a class="nl {% if nav=='fcsource' %}on{% endif %}" href="/fcsource{{ q }}"><span class="ic">≈</span> Forecast source</a>
+
+    <div class="grp">Decide</div>
+    <a class="nl {% if nav=='risk' %}on{% endif %}" href="/risk{{ q }}"><span class="ic">⚑</span> Supply risk engine</a>
+    <a class="nl {% if nav=='forecast' %}on{% endif %}" href="/forecast{{ q }}"><span class="ic">∿</span> Forecast &amp; signals</a>
+    <a class="nl {% if nav=='social' %}on{% endif %}" href="/social{{ q }}"><span class="ic">◎</span> Social signal desk</a>
+    <a class="nl {% if nav=='copacker' %}on{% endif %}" href="/copacker{{ q }}"><span class="ic">⊕</span> Co-packer</a>
+    <a class="nl {% if nav=='reviews' %}on{% endif %}" href="/reviews{{ q }}"><span class="ic">✓</span> Review queue</a>
+
+    <div class="grp">Settings</div>
+    <a class="nl {% if nav=='controls' %}on{% endif %}" href="/controls{{ q }}"><span class="ic">⚙</span> Control panel
+      {% if departures %}<span class="badge warnb">{{ departures|length }}</span>{% endif %}</a>
+    <a class="nl {% if nav=='data' %}on{% endif %}" href="/data{{ q }}"><span class="ic">ⓘ</span> Data &amp; assumptions</a>
+  {% endmacro %}
+
+  <nav class="sidenav" aria-label="Main">
+    <div class="brand"><span class="mark">PS</span><span class="bt">PulpSense<small>Pulp Riot · decision support</small></span></div>
+    {{ navlinks() }}
+    <div class="grp">Viewing as</div>
+    <div style="padding:2px 9px 10px">
+      <div style="font-size:13px;font-weight:700">Planning team</div>
+      <div class="small muted">Every recommendation needs a named approver</div>
+    </div>
+  </nav>
+
+  <div>
+    <header class="topbar">
+      <a class="brand" href="/{{ q }}" style="color:inherit"><span class="mark">PS</span><span>PulpSense</span></a>
+      <div class="spacer"></div>
+      <span class="chip on">{{ week.strftime('%d %b %Y') }}</span>
+    </header>
+    <nav class="mnav" aria-label="Pages">{{ navlinks() }}</nav>
+
+    <main class="page">
+      {# ------------------------------------------- the As-of control, on every page #}
+      <form class="asof" method="get" action="">
+        <span class="lbl">As of week</span>
+        {% if prev_w %}<a class="btn tiny" href="?asof={{ prev_w.isoformat() }}" title="Previous week">‹</a>{% endif %}
+        <select name="asof" onchange="this.form.submit()" aria-label="Week">
+          {% for x in weeks|reverse %}
+          <option value="{{ x.isoformat() }}" {% if x == week %}selected{% endif %}>Week of {{ x.strftime('%d %b %Y') }}</option>
+          {% endfor %}
+        </select>
+        {% if next_w %}<a class="btn tiny" href="?asof={{ next_w.isoformat() }}" title="Next week">›</a>{% endif %}
+        <span class="known">Showing what was known by {{ known_by.strftime('%a %d %b %Y') }}</span>
+        <span class="spacer"></span>
+        {% for label, d in JUMPS %}
+          <a class="chip {% if d == week %}on{% endif %}" href="?asof={{ d.isoformat() }}">{{ label }}</a>
+        {% endfor %}
+        <a class="chip {% if latest == week %}on{% endif %}" href="?asof={{ latest.isoformat() }}">Latest</a>
+        <a class="chip {% if departures %}danger{% elif n_changed %}warn{% endif %}" href="/controls{{ q }}"
+           title="Active scenario; change it in the Control panel">Scenario: {{ scen }}{% if n_changed %} · {{ n_changed }} changed{% endif %}</a>
+        <noscript><button class="btn tiny" type="submit">Go</button></noscript>
+      </form>
+
+      {% if msg %}<div class="banner ok" role="status">{{ msg }}</div>{% endif %}
+      {% if err %}<div class="banner err" role="alert">{{ err }}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+n,check,result,detail
+1,Headline figures reconcile; exceptions explained,pass,"Loss before 21.79; Loss after 19.08; Transport 0.76; After total 19.84; Saving 1.96; Transfers 113; Bottles moved 50.75 | exceptions: 4 unreported rows (D_E1, week of 2025-02-03) carry ₹0.2755 Cr = all of 2025's loss"
+2,Default window is Mar–Jun 2026; net-by-year view present,pass,"default chip on: True; net by year {2024: -0.09, 2025: -0.23, 2026: 2.28}"
+3,"Next to the saving, PP and DP residual is called a supply problem",pass,PP + DP = 99.98% of the loss left after rebalancing (Mar–Jun 2026); 98.3% over the whole file
+4,Financial controls recalculate; optimiser controls disabled with a match rate,pass,"recalc {'h01': True, 'h02': True, 'a08': True, 'h03': True}; locked ['h04', 'h06', 'h07'] ignored=True disabled in UI=True; greedy replica reproduces 22/113 transfers (receivers 94/98) < 90% tolerance"
+5,Overstock exposure view without an invented write-off,pass,over-35 depot-weeks 321 → 337; write-off shown only if h05 > 0 (now 0)
+6,No accuracy claim from sample or file data,pass,every mention is a disclaimer
+7,Prompt 1 behaviour still works,pass,co-packer blocked below threshold: True; Given departure on READ_ME: True; 5 presets: True; theme tokens: True; 18/18 pages render
+8,READ_ME carries the inventory items and the teammate questions,pass,"9/9 required items; 5 open questions; groups ['Data', 'Demand', 'Inventory (prompt 2)', 'Open questions (teammate)', 'Supply', 'Transport']"

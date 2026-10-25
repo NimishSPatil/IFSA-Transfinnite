@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Demand · PulpSense{% endblock %}
+{% block content %}
+{% set k = v.kpi %}
+{% set q = '?asof=' ~ week.isoformat() %}
+{% set CH = {'C_GT': 'General trade', 'C_MT': 'Modern trade', 'C_QC': 'Quick commerce'} %}
+
+<h1>Demand</h1>
+<p class="sub">What customers ordered, what was sold, and how the company's existing forecast compares — week of {{ week.strftime('%d %B %Y') }}.</p>
+
+<div class="stats">
+  <div class="stat">
+    <div class="v">{{ k.sold|bottles }}</div>
+    <div class="k">Bottles sold this week</div>
+    <div class="d">{{ (k.sold * 60)|inr }}{% if k.sold_ly %} · <b>{{ (k.sold / k.sold_ly - 1)|pct }}</b> vs same week last year{% endif %}</div>
+  </div>
+  <div class="stat {% if k.fill and k.fill < 0.97 %}alert{% endif %}">
+    <div class="v">{{ '%.0f'|format((k.fill or 0) * 100) }}%</div>
+    <div class="k">Fill rate · sold ÷ ordered</div>
+    <div class="d">{{ k.lost|bottles }} bottles ordered but not supplied ({{ (k.lost * 60)|inr }})</div>
+  </div>
+  <div class="stat {% if k.acc and k.acc.mape > 0.3 %}warn{% endif %}">
+    <div class="v">{% if k.acc %}{{ '%.0f'|format(k.acc.mape * 100) }}%{% else %}–{% endif %}</div>
+    <div class="k">Old forecast error · {{ k.acc_month or 'no month yet' }}</div>
+    <div class="d">{% if k.acc %}Flavor × depot, monthly. Actual was <b>{{ k.acc.bias|pct }}</b> vs forecast{% endif %}</div>
+  </div>
+  <div class="stat {% if k.top and k.top.mult > 1.5 %}warn{% endif %}">
+    <div class="v">{% if k.top %}{{ '%.1f'|format(k.top.mult) }}×{% else %}–{% endif %}</div>
+    <div class="k">Quick-commerce pulse · biggest mover</div>
+    <div class="d">{% if k.top %}<b>{{ SKU_NAMES[k.top.sku] }}</b>: last 7 days vs its 4-week average{% endif %}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Demand against the forecast · 26 weeks</h2>
+  <div class="chips" style="margin-bottom:8px">
+    <a class="chip {% if v.flavor == 'all' %}on{% endif %}" href="{{ q }}&flavor=all">All flavors</a>
+    {% for s in v.live %}<a class="chip {% if v.flavor == s %}on{% endif %}" href="{{ q }}&flavor={{ s }}">{{ SKU_NAMES[s] }}</a>{% endfor %}
+  </div>
+  {{ charts.demand_forecast(v.dvf.weeks, v.dvf.sold, v.dvf.ordered, v.dvf.p50, v.dvf.p80)|safe }}
+  <div class="legend-inline" style="flex-wrap:wrap">
+    <span><span class="sw" style="background:#2251FF"></span>Sold</span>
+    <span><span class="sw" style="background:#b91c1c"></span>Ordered (true demand)</span>
+    <span><span class="sw" style="background:#cbd5e1"></span>Old forecast, P50 to P80</span>
+    <span class="muted">Lakh bottles per week</span>
+  </div>
+  <div class="hint">Where the red line rises above the blue bars, customers wanted more than depots could supply. The forecast is the company's current method: same month last year × last year's growth, last year's flavor mix (P80 = P50 × 1.32).</div>
+</div>
+
+<div class="card">
+  <h2>The signal gap · quick commerce, daily</h2>
+  <div class="chips" style="margin-bottom:8px">
+    {% for s in v.live %}<a class="chip {% if v.gap.sku == s %}on{% endif %}" href="{{ q }}&flavor={{ v.flavor }}&qcf={{ s }}">{{ SKU_NAMES[s] }}</a>{% endfor %}
+  </div>
+  {{ charts.signal_gap(v.gap.days, v.gap['values'], v.gap.cutoff, v.gap.oos)|safe }}
+  <div class="legend-inline" style="flex-wrap:wrap">
+    <span><span class="sw" style="background:#2251FF"></span>Bottles sold per day · Marketing sees this daily</span>
+    <span><span class="sw" style="background:#b45309"></span>What Planning has (to month-end {{ v.gap.cutoff.strftime('%d %b') }})</span>
+    <span><span class="sw" style="background:#b91c1c;border-radius:50%"></span>Depots out of stock that day (bigger dot = more depots)</span>
+  </div>
+  <div class="hint">{{ SKU_NAMES[v.gap.sku] }}, all depots, last 70 days. Platforms report sell-through daily to Marketing; Planning gets consolidated sales only at month-end (case F29, F30).
+    {% if v.gap.lag %}Planning's latest data is <b>{{ v.gap.lag }} days old</b>.{% endif %}
+    When sales fall while depots are out of stock, demand has not fallen: there was nothing to sell.</div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Quick-commerce pulse · last 7 days</h2>
+    <table class="tbl">
+      <thead><tr><th>Flavor</th><th class="num">Last 7 days</th><th class="num">vs 4-week average</th><th class="num">Days with stock-outs</th></tr></thead>
+      <tbody>
+      {% for p in v.pulse %}
+        <tr><td><a href="{{ q }}&flavor={{ v.flavor }}&qcf={{ p.sku }}">{{ SKU_NAMES[p.sku] }}</a></td>
+          <td class="num">{{ p.last7|bottles }}</td>
+          <td class="num"><b {% if p.mult and p.mult > 1.5 %}style="color:var(--warn)"{% endif %}>{{ '%.2f'|format(p.mult) ~ '×' if p.mult else 'new' }}</b></td>
+          <td class="num">{% if p.oos_days %}<span class="tag hot">{{ p.oos_days }} of 7</span>{% else %}–{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="hint">Quick commerce is the only channel with daily data. There is no general-trade outlet data (case F70).</div>
+  </div>
+  <div class="card">
+    <h2>Lost sales · last 4 weeks</h2>
+    <div class="cols" style="gap:16px">
+      <div class="bars">
+        {% set mx = (v.lost4.fl|map(attribute=1)|max) or 1 %}
+        {% for s, val in v.lost4.fl %}
+        <div class="bar-row"><div class="bl"><span>{{ SKU_NAMES[s] }}</span><span class="n">{{ val|bottles }}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ val / mx * 100 }}%;background:#b91c1c"></div></div></div>
+        {% endfor %}
+      </div>
+      <div class="bars">
+        {% set mr = (v.lost4.rg|map(attribute=1)|max) or 1 %}
+        {% for r, val in v.lost4.rg %}
+        <div class="bar-row"><div class="bl"><span>{{ r }}</span><span class="n">{{ val|bottles }}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ val / mr * 100 }}%;background:#b91c1c"></div></div></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="hint">Bottles ordered but not supplied, by flavor and by region.</div>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Mix · last 4 weeks</h2>
+    <div class="scroll-x">
+    <table class="tbl">
+      <thead><tr><th>Flavor</th><th class="num">Share</th>{% for c in ['C_GT', 'C_MT', 'C_QC'] %}<th class="num">{{ CH[c] }}</th>{% endfor %}
+        {% for r in ['North', 'South', 'East', 'West'] %}<th class="num">{{ r }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for s in v.mix.skus %}
+        <tr><td><b>{{ SKU_NAMES[s] }}</b></td><td class="num"><b>{{ '%.0f'|format(v.mix.fl[s] * 100) }}%</b></td>
+          {% for c in ['C_GT', 'C_MT', 'C_QC'] %}<td class="num">{{ '%.1f'|format(v.mix.ch[s][c] * 100) }}%</td>{% endfor %}
+          {% for r in ['North', 'South', 'East', 'West'] %}<td class="num">{{ '%.1f'|format(v.mix.rg[s][r] * 100) }}%</td>{% endfor %}</tr>
+      {% endfor %}
+        <tr><td class="muted">All</td><td class="num">100%</td>
+          {% for c in ['C_GT', 'C_MT', 'C_QC'] %}<td class="num"><b>{{ '%.0f'|format(v.mix.ch_tot[c] * 100) }}%</b></td>{% endfor %}
+          {% for r in ['North', 'South', 'East', 'West'] %}<td class="num"><b>{{ '%.0f'|format(v.mix.rg_tot[r] * 100) }}%</b></td>{% endfor %}</tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="hint">Each cell is a share of all bottles sold in the last 4 weeks. Case summer mix: 38/20/16/14/12 by flavor, 55/25/20 by channel.</div>
+  </div>
+
+  <div class="card">
+    <h2>Old forecast accuracy by flavor</h2>
+    {% if v.acc %}
+    <table class="tbl">
+      <thead><tr><th>Flavor</th>{% for mo, a in v.acc %}<th class="num">{{ mo }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for s in v.live %}
+        <tr><td><b>{{ SKU_NAMES[s] }}</b></td>
+          {% for mo, a in v.acc %}{% set x = a.by_sku.get(s) %}
+            <td class="num">{% if x %}<span {% if x.mape > 0.4 %}style="color:var(--danger);font-weight:700"{% endif %}>{{ '%.0f'|format(x.mape * 100) }}%</span>
+              <span class="small muted">{{ x.bias|pct }}</span>{% else %}–{% endif %}</td>
+          {% endfor %}</tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="hint">Error (mean absolute %, depot level) and, in grey, actual vs forecast. Months approximate: weeks are counted in the month they start.</div>
+    {% else %}<div class="placeholder">No completed months yet.</div>{% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

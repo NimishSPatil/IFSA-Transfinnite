@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Forecast &amp; signals · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() %}
+{% set back = '/forecast' ~ q ~ '&sku=' ~ sku %}
+
+<h1>Forecast &amp; signals</h1>
+<p class="sub">Two layers: a slow, explainable baseline that sizes pulp and stock, and a daily quick-commerce detector that notices a shift in days, not at month-end.
+  No accuracy is claimed from this sample; the evidence is detection lead time in the replay.</p>
+{{ ui.scen_banner() }}
+
+<div class="stats">
+  <div class="stat good">
+    <div class="v">{{ rep.detected|day if rep.detected else '–' }}</div>
+    <div class="k">March spike detected (replay) {{ ui.src('Derived', 'detector f08-f14, f26') }}</div>
+    <div class="d">{% if rep.detected %}<b>{{ rep.lead_planning }} days</b> before Planning's month-end view ({{ rep.planning_sees|day }}, case F30){% else %}not detected with these settings{% endif %}</div>
+  </div>
+  <div class="stat {% if al|selectattr('active')|list %}alert{% endif %}">
+    <div class="v">{{ al|selectattr('active')|list|length }}</div>
+    <div class="k">Active demand alerts</div>
+    <div class="d">{{ al|length }} in the last 35 days</div>
+  </div>
+  <div class="stat">
+    <div class="v">P{{ ctl['f03']|int }} / P{{ ctl['f04']|int }}</div>
+    <div class="k">Pulp / finished-goods percentile {{ ui.src('Assumed', 'f03, f04') }}</div>
+    <div class="d">pulp keeps 6 months (F37); stock-outs cost contribution</div>
+  </div>
+  <div class="stat">
+    <div class="v">{{ '%.0f'|format(ctl['f02'] * 100) }}%</div>
+    <div class="k">National flavor error used {{ ui.src('Assumed', 'f02') }}</div>
+    <div class="d">depot level {{ '%.0f'|format(ctl['f01'] * 100) }}% {{ ui.src('Given', 'F28') }}</div>
+  </div>
+</div>
+
+<div class="chips" style="margin-bottom:10px">
+  {% for s in ['MPB', 'GC', 'PP', 'DB', 'DP'] %}<a class="chip {% if s == sku %}on{% endif %}" href="{{ q }}&sku={{ s }}">{{ SKU_NAMES[s] }}</a>{% endfor %}
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Layer 1 · baseline for {{ SKU_NAMES[sku] }} · next 12 weeks</h2>
+    {{ charts.fan_chart(fan.hist_w, fan.hist, fan.weeks, fan.p10, fan.p50, fan.p80, fan.p90)|safe }}
+    <div class="legend-inline" style="flex-wrap:wrap">
+      <span><span class="sw" style="background:#051C2C;opacity:.55"></span>Estimated demand ({{ ctl['f07'] }})</span>
+      <span><span class="sw" style="background:#2251FF"></span>P50</span>
+      <span><span class="sw" style="background:#00A9F4"></span>P80 (dashed), P10–P90 band</span>
+    </div>
+    <div class="hint">Method: {{ methods.get(sku, '–') }}. P50 = last year's same week × a level blended between planned growth
+      {{ '%.0f'|format(ctl['f23'] * 100) }}% (f23) and the realised level of the last {{ ctl['f06']|int }} weeks (weight {{ ctl['f05'] }}, f05).
+      Ranges: P × (1 + z × {{ '%.0f'|format(ctl['f02'] * 100) }}% ÷ 0.7979). Censored weeks: "{{ ctl['f07'] }}" (f07) — never read as low demand. {{ ui.src('Derived') }}</div>
+  </div>
+
+  <div class="card">
+    <h2>Horizons tied to levers</h2>
+    <table class="tbl">
+      <thead><tr><th>Lever</th><th class="num">Needs warning of</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Imported dragonfruit order</td><td class="num">~12 weeks</td><td class="small">{{ ctl['a02']|int }}–{{ ctl['a03']|int }} days, ordered quarterly {{ ui.src('Given', 'F16, F17') }}</td></tr>
+        <tr><td>Co-packer call</td><td class="num">{{ ctl['d09']|int }} days</td><td class="small">notice period {{ ui.src('Given', 'F22') }}</td></tr>
+        <tr><td>Air freight</td><td class="num">{{ ctl['a05']|int }} days</td><td class="small">booking to arrival {{ ui.src('Derived', 'a05, G16') }}</td></tr>
+        <tr><td>Passionfruit pre-positioning</td><td class="num">before the season</td><td class="small">closures in {{ ctl['b03']|int }} of 5 summers {{ ui.src('Given', 'F42') }}</td></tr>
+        <tr><td>Depot transfer</td><td class="num">~1 week</td><td class="small">{{ ctl['a07']|int }} days transit {{ ui.src('Given', 'F49') }}</td></tr>
+        <tr><td>Depot allocation reset</td><td class="num">weekly review</td><td class="small">today: monthly {{ ui.src('Given', 'F47') }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>P50 by flavor · next 8 weeks</h2>
+    <div class="scroll-x"><table class="tbl">
+      <thead><tr><th>Week of</th>{% for s in table.columns %}<th class="num">{{ s }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for wk, r in table.iterrows() %}<tr><td>{{ wk|day }}</td>{% for s in table.columns %}<td class="num">{{ r[s]|bottles }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table></div>
+    <div class="hint">All channels. {% for s, mm in methods.items() %}{% if s == 'DP' %}Dragon Passion: {{ mm }}.{% endif %}{% endfor %} {{ ui.src('Derived') }}</div>
+  </div>
+  <div class="card">
+    <h2>Pulp needed · P{{ ctl['f03']|int }}, tonnes per week</h2>
+    <div class="scroll-x"><table class="tbl">
+      <thead><tr><th>Week of</th>{% for i in kg8.columns %}<th class="num">{{ i }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for wk, r in kg8.iterrows() %}<tr><td>{{ wk|day }}</td>{% for i in kg8.columns %}<td class="num">{{ '%.1f'|format(r[i] / 1000) }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table></div>
+    <div class="hint">Bottles × recipe (d01–d04). Every kilogram is {{ ui.src('Assumed', 'recipe G05, G06') }} — the case gives no bill of materials.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Layer 2 · daily quick-commerce detector · {{ SKU_NAMES[sku] }}</h2>
+  {% set mk = [] %}
+  {% if sku == 'DP' and rep.detected %}{% set mk = [(rep.detected, 'detected ' ~ rep.detected.strftime('%d %b'), '#b91c1c')] %}{% endif %}
+  {{ charts.detector_chart(rows, ctl['f09'], marks=mk)|safe }}
+  <div class="legend-inline" style="flex-wrap:wrap">
+    <span><span class="sw" style="background:#2251FF;opacity:.75"></span>Daily sales (red = alert active)</span>
+    <span><span class="sw" style="background:#051C2C"></span>Lagged baseline (dashed)</span>
+    <span><span class="sw" style="background:#2251FF"></span>Smoothed ratio, lower band</span>
+    <span><span class="sw" style="background:#e2e8f0"></span>Stock-out days: unobservable</span>
+  </div>
+  <div class="hint">Ratio = today ÷ the mean of days {{ 7 + ctl['f14']|int }} to 8 back{% if ctl['f26'] == 'yes' %}, ÷ last year's ratio on the same days (seasonal rise removed){% endif %}.
+    EWMA λ {{ ctl['f08'] }}, alert above {{ ctl['f09'] }}x or CUSUM over {{ ctl['f11'] }} (slack {{ ctl['f10'] }}), for {{ ctl['f12']|int }} days running,
+    baseline ≥ {{ ctl['f13']|int }} bottles/day. Days with a third or more of depots out of stock are skipped, not read as falling demand. {{ ui.src('Assumed', 'A33') }}</div>
+</div>
+
+<div class="card">
+  <h2>Demand alerts · last 35 days <span class="count">{{ al|length }}</span></h2>
+  {% for a in al %}
+    <div class="card" style="box-shadow:none;margin-bottom:10px">
+      <div class="flexrow" style="flex-wrap:wrap">
+        <b class="grow">{{ SKU_NAMES[a.sku] }} · quick commerce {{ '%.1f'|format(a.ratio) }}x baseline · {{ a.cls }}</b>
+        {% if a.active %}<span class="tag hot">active since {{ a.start|day }}</span>{% else %}<span class="tag muted">ended {{ a.end|day }}</span>{% endif %}
+      </div>
+      <ul class="small" style="margin:6px 0;padding-left:18px">{% for e in a.evidence %}<li>{{ e }}</li>{% endfor %}</ul>
+      {% if a.scen %}
+        <div class="scroll-x"><table class="tbl">
+          <thead><tr><th>If the rise…</th><th class="num">Extra bottles, {{ ctl['g06']|int }} d</th><th>Lever threatened</th><th class="num">Warning time</th>
+            {% for l in a.scen[0].levers %}<th class="num small">{{ l.lever }} ({{ l.response|int }} d)</th>{% endfor %}</tr></thead>
+          <tbody>{% for sc in a.scen %}<tr><td><b>{{ sc.name }}</b></td><td class="num">{{ sc.extra|bottles }}</td>
+            <td class="small">{% for h in sc.hit %}{{ h.ing }} unsafe {{ h.day|day }}{{ '; ' if not loop.last }}{% else %}{% if sc.cap_from %}plant capacity from {{ sc.cap_from|day }}{% else %}none in the horizon{% endif %}{% endfor %}</td>
+            <td class="num">{{ (sc.warning|string ~ ' d') if sc.warning is not none else '–' }}</td>
+            {% for l in sc.levers %}<td class="num">{% if sc.warning is none %}<span class="muted">–</span>{% elif l.in_time %}<span class="tag cold">in time</span>{% else %}<span class="tag hot">too late</span>{% endif %}</td>{% endfor %}
+          </tr>{% endfor %}</tbody>
+        </table></div>
+        <div class="hint">Persistence is not known (G20): hold, decay (half-life {{ ctl['f17']|int }} d) and fade ({{ ctl['f18']|int }} d) are scenarios, not forecasts.
+          A {{ '%.1f'|format(a.ratio) }}x rise in orders is not a {{ '%.1f'|format(a.ratio) }}x sell-through forecast.</div>
+        {{ ui.review_form(dict(id=a.id, title='Demand alert ' ~ a.sku, owner='Planning', status=a.status, decision=a.decision), back) }}
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="placeholder"><b>No demand alert in the last 35 days.</b><br>The detector runs on every flavor's quick-commerce sell-through each day.</div>
+  {% endfor %}
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Replay · the March spike</h2>
+    {% if rep.detected %}
+    <div class="kv">
+      <dt>Viral reel (case)</dt><dd>~2 weeks after the early-March launch (F51, F52)</dd>
+      <dt>Detector first breach</dt><dd>{{ rep.first_hit|day }}</dd>
+      <dt>Alert raised</dt><dd>{{ rep.detected|day }} ({{ ctl['f12']|int }} days running)</dd>
+      <dt>Planning sees it</dt><dd>{{ rep.planning_sees|day }} — consolidated sales at month-end (F30)</dd>
+      <dt>Lead over month-end</dt><dd><b style="color:var(--accent-d)">{{ rep.lead_planning }} days</b></dd>
+      <dt>Peak ratio</dt><dd>{{ '%.1f'|format(rep.peak) }}x baseline</dd>
+    </div>
+    {% else %}<div class="placeholder">Not detected between 2 March and 30 April with the current detector settings.</div>{% endif %}
+    <div class="hint">Replayed day by day on the sample's quick-commerce feed, using only days already reported. The sample's ramp is an assumption, so this is a replay of the sample, not proof.
+      {{ ui.src('Derived', 'replay') }}</div>
+  </div>
+  <div class="card">
+    <h2>Replay · the May stock-outs (censoring check)</h2>
+    <table class="tbl"><thead><tr><th>Flavor</th><th class="num">Censored days</th><th class="num">"Demand collapse" alerts, no mask</th><th class="num">With the stock-out mask</th></tr></thead>
+      <tbody>{% for c in cens %}<tr><td><b>{{ c.sku }}</b></td><td class="num">{{ c.censored_days }}</td>
+        <td class="num">{% if c.unmasked %}<span class="tag hot">{{ c.unmasked }}</span>{% if c.first_unmasked %} <span class="small muted">from {{ c.first_unmasked|day }}</span>{% endif %}{% else %}0{% endif %}</td>
+        <td class="num"><span class="tag cold">{{ c.masked }}</span></td></tr>{% endfor %}</tbody></table>
+    <div class="hint">11 May – 30 June 2026. Without the mask, empty shelves would read as falling demand; with it, those days are marked unobservable (spec 6, 8).</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Compare and choose · how to detect a shift</h2>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Method</th><th class="num">Injected spikes caught</th><th class="num">Median delay</th><th class="num">False alerts</th><th>Notes</th></tr></thead>
+    <tbody>{% for r in mt %}
+      <tr {% if r.key == 'adjusted' %}class="win"{% endif %}><td><b>{{ r.method }}</b>{% if r.key == 'adjusted' %} <span class="tag cold">chosen</span>{% endif %}</td>
+        <td class="num">{{ r.caught }} / {{ r.spikes }}</td><td class="num">{{ ('%.0f d'|format(r.median_delay)) if r.median_delay is not none else '–' }}</td>
+        <td class="num">{{ r.false }}</td>
+        <td class="small">{% if r.key == 'adjusted' %}catches spikes during the seasonal ramp; tunable (f08–f14); shows its evidence
+          {% elif r.key == 'raw' %}the seasonal ramp itself trips it, so a real spike lands inside an alert already running
+          {% else %}simple, but blind to a slow 4x ramp and to stock-outs; no knob for noise{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  <div class="hint">Injected-scenario test (spec 8): {{ mt[0].runs }} seeded synthetic series built from the sample's smoothed Guava Chilli season with 10% daily noise;
+    half get a 2–4x spike with a 7-day ramp. <b>Synthetic, for choosing a method — not an accuracy figure.</b> Choice: EWMA + CUSUM on the seasonally adjusted ratio (f26 = yes).
+    For the baseline, "last year's shape × blended level" replaces the spec's flat Mar–Jun plan because dataset v2 has two years of history; a black-box model was rejected
+    (15 planners in spreadsheets, vendor-run IT, no data team: F63–F65).</div>
+</div>
+
+<div class="card">
+  <h2>Depot split · share of national demand</h2>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Depot</th>{% for s in ['MPB', 'GC', 'PP', 'DB', 'DP'] %}{% if sh[s] %}<th class="num">{{ s }}</th>{% endif %}{% endfor %}<th class="num">DP in the monthly plan</th></tr></thead>
+    <tbody>{% for d in depots %}<tr><td><b>{{ d }}</b></td>
+      {% for s in ['MPB', 'GC', 'PP', 'DB', 'DP'] %}{% if sh[s] %}<td class="num">{{ '%.1f'|format(sh[s].share[d] * 100) }}%</td>{% endif %}{% endfor %}
+      <td class="num muted">{% if plan.DP is not none and d in plan.DP.index %}{{ '%.1f'|format(plan.DP[d] * 100) }}%{% else %}–{% endif %}</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  <div class="hint">{% for s in ['MPB', 'GC', 'PP', 'DB', 'DP'] %}{% if sh[s] %}{{ s }}: {{ sh[s].method }}. {% endif %}{% endfor %}
+    Shrinkage: share = (n × own + k × region) ÷ (n + k), k = {{ ctl['f20'] }} (f20); recency half-life {{ ctl['f19'] }} weeks (f19).
+    Quick-commerce spikes are spread by observed depot share — there is no dark-store-to-depot map (G02, G03). {{ ui.src('Assumed', 'A35') }}
+    Hook for prompt 2: <code>forecast.depot_forecast(w, ctl)</code>.</div>
+</div>
+
+{% endblock %}

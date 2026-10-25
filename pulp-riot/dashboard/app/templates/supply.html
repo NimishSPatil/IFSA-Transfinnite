@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Supply · PulpSense{% endblock %}
+{% block content %}
+{% set k = s.kpi %}
+{% set q = '?asof=' ~ week.isoformat() %}
+
+<h1>Supply</h1>
+<p class="sub">Pulp coming into the two plants, how long it lasts, who it depends on, and what the plants made — week of {{ week.strftime('%d %B %Y') }}.</p>
+
+<div class="card">
+  <h2>Supply risk engine · looking {{ ctl['g06']|int }} days ahead from {{ eng.K|day }}</h2>
+  <div class="flexrow" style="flex-wrap:wrap;gap:6px;margin-bottom:8px">
+    {% for i in ['passionfruit', 'dragonfruit', 'mango', 'peach', 'basil', 'guava'] %}
+      {% set r = eng.ing[i] %}
+      <a class="chip {% if r.first_unsafe %}danger{% endif %}" href="/risk{{ q }}&ing={{ i }}#balance">{{ i|capitalize }} · {% if r.first_unsafe %}unsafe {{ r.first_unsafe|day }}{% else %}safe{% endif %}</a>
+    {% endfor %}
+  </div>
+  {% for r in trig[:4] %}<div class="small" style="margin:3px 0">{{ ui.status(r.severity) }} <b>{{ r.id }}</b> {{ r.name }} — {{ r.evidence }}</div>
+  {% else %}<div class="small muted">No supply risk triggered. {{ rk.get('Watch', 0) }} on watch.</div>{% endfor %}
+  <div class="hint"><a href="/risk{{ q }}">Open the risk engine</a> for the daily balance, the 27 rules and the options to compare. {{ rk.get('Triggered', 0) }} triggered ·
+    {{ rk.get('Watch', 0) }} watch · {{ rk.get('Structural', 0) }} structural.</div>
+</div>
+
+<div class="stats">
+  <div class="stat {% if k.pf_cover < k.longest %}alert{% endif %}">
+    <div class="v">{{ '%.0f'|format(k.pf_cover) }} days</div>
+    <div class="k">Passionfruit cover at the plants</div>
+    <div class="d">{% if k.longest %}Longest closure on record: <b>{{ k.longest }} days</b>{% else %}No closure on record yet{% endif %}
+      {% if k.closed_days %} · <b style="color:var(--danger)">road closed this week</b>{% endif %}</div>
+  </div>
+  <div class="stat">
+    <div class="v">{{ '%.0f'|format(k.df_cover) }} days</div>
+    <div class="k">Dragonfruit cover at the plants</div>
+    <div class="d">+ <b>{{ '%.0f'|format(k.df_transit_days) }} days</b> on the water ({{ k.transit_orders }} import order{{ 's' if k.transit_orders != 1 }}) · imports take 6–8 weeks</div>
+  </div>
+  <div class="stat {% if k.util >= 0.99 %}warn{% endif %}">
+    <div class="v">{{ '%.0f'|format(k.util * 100) }}%</div>
+    <div class="k">Plant utilisation this week</div>
+    <div class="d">{% if k.cp_units %}Co-packer running: <b>{{ k.cp_units|bottles }}</b> bottles{% else %}Co-packer idle (up to +10%, 14 days notice){% endif %}</div>
+  </div>
+  <div class="stat {% if k.not_shipped %}alert{% elif k.late %}warn{% endif %}">
+    <div class="v">{{ k.not_shipped + k.late }}</div>
+    <div class="k">Pulp orders in trouble · last 4 weeks</div>
+    <div class="d">{{ k.not_shipped }} not shipped (road closed) · {{ k.late }} arrived late</div>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Passionfruit cover · 26 weeks</h2>
+    {{ charts.cover_line(s.pf_series.weeks, s.pf_series['values'], s.pf_series.closed, s.pf_series.ref)|safe }}
+    <div class="legend-inline">
+      <span><span class="sw" style="background:#2251FF"></span>Days of cover (lower of the two plants)</span>
+      <span><span class="sw" style="background:#fee2e2;border:1px solid #fca5a5"></span>Highway closed</span>
+    </div>
+    <div class="hint">Cover = pulp in cold storage ÷ average daily use over the previous 4 weeks. The single cooperative ships by one road only (case F35, F41).</div>
+  </div>
+
+  <div class="card">
+    <h2>Who each flavor depends on</h2>
+    <div class="scroll-x">
+    <table class="tbl">
+      <thead><tr><th>Supplier</th><th>Flavors that need it</th><th class="num">Share of sales*</th><th>Route</th></tr></thead>
+      <tbody>
+      {% for e in s.exposure %}
+        <tr>
+          <td><b>{{ e.supplier }}</b>{% if e.single %} <span class="tag hot">single source</span>{% endif %}</td>
+          <td>{{ e.flavors|join(', ') }}</td>
+          <td class="num"><b>{{ '%.0f'|format(e.share * 100) }}%</b></td>
+          <td class="small muted">{{ e.mode }} · {{ e.lead }} days · {{ e.cycle }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="hint">* Share of bottles sold in the last 4 weeks that cannot be made without this supplier's pulp.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Pulp cover by plant and ingredient · this week</h2>
+  <div class="scroll-x">
+  <table class="tbl">
+    <thead><tr><th>Ingredient</th><th>Plant</th><th class="num">Opening kg</th><th class="num">Road</th><th class="num">Import</th>
+      <th class="num">Air</th><th class="num">Used</th><th class="num">Closing kg</th><th style="width:22%">Days of cover vs target</th></tr></thead>
+    <tbody>
+    {% for r in s.cover_rows %}
+      {% set ratio = (r.cover / r.target) if (r.cover == r.cover and r.target) else 1 %}
+      {% set bad = ratio < 0.5 %}
+      {% set low = ratio < 0.75 %}
+      <tr>
+        <td><b>{{ r.ingredient|capitalize }}</b></td>
+        <td>{{ r.plant }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.opening) }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.road) if r.road else '–' }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.imp) if r.imp else '–' }}</td>
+        <td class="num">{% if r.air %}<b style="color:var(--warn)">{{ '{:,.0f}'.format(r.air) }}</b>{% else %}–{% endif %}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.used) }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.closing) }}</td>
+        <td>
+          <div class="bl" style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="font-weight:700;{% if bad %}color:var(--danger){% elif low %}color:var(--warn){% endif %}">{{ '%.1f'|format(r.cover) if r.cover == r.cover else '–' }} d</span>
+            <span class="muted">target {{ '%.0f'|format(r.target) }}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ [100, (r.cover / r.target * 100) if (r.cover == r.cover and r.target) else 0]|min }}%;
+            background:{% if bad %}#b91c1c{% elif low %}#d97706{% else %}#2251FF{% endif %}"></div></div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="hint">Only passionfruit and dragonfruit can limit production (single cooperative and road; quarterly imports). Mango, peach, basil and guava suppliers top up as needed. Bars: red under 50% of the ingredient's own target, amber under 75%.</div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Production this week</h2>
+    <table class="tbl">
+      <thead><tr><th>Flavor</th><th class="num">Requested by depots</th><th class="num">Produced</th><th class="num">of which co-packer</th><th style="width:28%">Fill</th></tr></thead>
+      <tbody>
+      {% for p in s.production %}
+        {% set f = (p.produced / p.requested) if p.requested else 1 %}
+        <tr>
+          <td><b>{{ SKU_NAMES[p.sku] }}</b></td>
+          <td class="num">{{ p.requested|bottles }}</td>
+          <td class="num">{{ p.produced|bottles }}</td>
+          <td class="num">{{ p.copacker|bottles if p.copacker else '–' }}</td>
+          <td><div class="bar-track"><div class="bar-fill" style="width:{{ [100, f * 100]|min }}%;background:{% if f < 0.5 %}#b91c1c{% elif f < 0.9 %}#d97706{% else %}#2251FF{% endif %}"></div></div>
+            <span class="small muted">{{ '%.0f'|format(f * 100) }}%</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="flexrow mt12">
+      <div class="grow small muted">Plant utilisation, last 12 weeks</div>
+      {{ charts.sparkline(s.util_spark, w=160, h=30)|safe }}
+    </div>
+    <div class="hint">Plants make 2.5 crore bottles a month. Co-packer extra cost (+25%): {{ s.cp_cost_week|inr }} this week, {{ s.cp_cost_ytd|inr }} in {{ week.year }} so far.
+      "Requested" is what depots ordered under the current monthly allocation method.</div>
+  </div>
+
+  <div class="card">
+    <h2>Imported dragonfruit · pipeline</h2>
+    <table class="tbl">
+      <thead><tr><th>Ordered</th><th class="num">kg</th><th>Due</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for p in s.pipeline %}
+        <tr>
+          <td>{{ p.ordered.strftime('%d %b %Y') }}</td>
+          <td class="num">{{ '{:,.0f}'.format(p.qty) }}</td>
+          <td>{{ p.due.strftime('%d %b') }}</td>
+          <td>
+            {% if p.state == 'on the water' %}<span class="tag cold">on the water</span>
+            {% elif p.state == 'overdue' %}<span class="tag hot">overdue</span>
+            {% elif p.state == 'late' %}<span class="tag warm">received {{ p.received.strftime('%d %b') }} · {{ '%.0f'|format(p.late) }} days late</span>
+            {% else %}<span class="tag muted">received {{ p.received.strftime('%d %b') }}</span>{% endif %}
+          </td>
+        </tr>
+      {% else %}<tr><td colspan="4" class="muted">No import orders yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    <div class="hint">Ordered once a quarter, sized from the forecast; 6–8 weeks by sea (case F16, F17).</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Pulp orders · last 4 weeks <span class="count">{{ s.po_total }}</span></h2>
+  <div class="chips" style="margin-bottom:10px">
+    {% for key, label in [('all','All'), ('received','Received'), ('late','Late'), ('due','Due'), ('not shipped','Not shipped'), ('air','Air freight')] %}
+      <a class="chip {% if s.po_filter == key %}on{% endif %}{% if key == 'not shipped' and s.po_counts.get(key) %} danger{% endif %}"
+         href="{{ q }}&po={{ key|urlencode }}">{{ label }}{% if key != 'all' %} · {{ s.po_counts.get(key, 0) }}{% endif %}</a>
+    {% endfor %}
+  </div>
+  <div class="scroll-x">
+  <table class="tbl">
+    <thead><tr><th>Ordered</th><th>Supplier</th><th>Ingredient</th><th>Mode</th><th class="num">kg</th><th>Due</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for p in s.po_rows %}
+      <tr>
+        <td>{{ p.ordered.strftime('%d %b') }}</td>
+        <td>{{ p.supplier }}</td>
+        <td>{{ p.ingredient }}</td>
+        <td>{{ p.mode }}</td>
+        <td class="num">{{ '{:,.0f}'.format(p.qty) }}</td>
+        <td>{{ p.due.strftime('%d %b') }}</td>
+        <td>
+          {% if p.state == 'not shipped' %}<span class="tag hot">not shipped · road closed</span>
+          {% elif p.state == 'late' %}<span class="tag warm">{{ '%.0f'|format(p.late) }} days late</span>
+          {% elif p.state == 'air' %}<span class="tag warm">air · {{ p.cost|inr }} at 5× cost</span>
+          {% elif p.state == 'due' %}<span class="tag cold">due</span>
+          {% else %}<span class="tag muted">received</span>{% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="7" class="muted">No orders match this filter.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,10 @@
+﻿depot_id,name,region,size_weight,quick_commerce_tilt,flavor_preference,data_source
+D_N1,North depot 1,North,1.15,1.2,Mango Peach Basil +10%,Assumed (case gives 9 depots in 4 regions only)
+D_N2,North depot 2,North,0.95,1.2,Mango Peach Basil +10%,Assumed (case gives 9 depots in 4 regions only)
+D_S1,South depot 1,South,1.0,0.8,Guava Chilli +20%,Assumed (case gives 9 depots in 4 regions only)
+D_S2,South depot 2,South,0.85,0.8,Guava Chilli +20%,Assumed (case gives 9 depots in 4 regions only)
+D_E1,East depot 1,East,0.9,0.8,Dragonfruit Bloom +10%,Assumed (case gives 9 depots in 4 regions only)
+D_E2,East depot 2,East,0.8,0.8,Dragonfruit Bloom +10%,Assumed (case gives 9 depots in 4 regions only)
+D_W1,West depot 1,West,1.25,1.2,Passionfruit Punch +10%,Assumed (case gives 9 depots in 4 regions only)
+D_W2,West depot 2,West,1.1,1.2,Passionfruit Punch +10%,Assumed (case gives 9 depots in 4 regions only)
+D_W3,West depot 3,West,1.0,1.2,Passionfruit Punch +10%,Assumed (case gives 9 depots in 4 regions only)

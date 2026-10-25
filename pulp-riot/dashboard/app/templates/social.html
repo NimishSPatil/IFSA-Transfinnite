@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Social signal desk · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() %}
+{% set back = '/social' ~ q %}
+
+<h1>Social signal desk</h1>
+<div class="sim-banner">Simulated feed, illustrative only. Pulp Riot has no social-listening data (gap G35); every mention below is synthetic.</div>
+<p class="sub">Mention velocity by flavor, region and reach tier, with sentiment and a rule-based reading. <b>Social alone never triggers procurement</b>:
+  an alert can only ask Planning to verify it against quick-commerce sell-through. Week ending {{ d.last.strftime('%d %b %Y') }}.</p>
+{{ ui.scen_banner() }}
+
+{% if not d.table %}
+  <div class="placeholder"><b>The simulated feed starts in October 2025.</b><br>Pick a later week to see the desk.</div>
+{% else %}
+<div class="stats">
+  <div class="stat"><div class="v">{{ '{:,}'.format(d.n_mentions) }}</div><div class="k">Mentions, last 7 days {{ ui.src('Simulated') }}</div></div>
+  <div class="stat {% if d.alerts %}warn{% endif %}"><div class="v">{{ d.alerts|length }}</div><div class="k">Signals to verify</div>
+    <div class="d">velocity ≥ {{ ctl['f24'] }}x and ≥ {{ ctl['f25']|int }} mentions/day, or complaints / competitor chatter</div></div>
+  <div class="stat"><div class="v">{{ d.alerts|selectattr('confirmed')|list|length }}</div><div class="k">Confirmed by QC sell-through</div></div>
+</div>
+
+<div class="card">
+  <h2>Velocity by flavor · last 7 days vs the 28 before</h2>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Flavor</th><th class="num">Mentions/day</th><th class="num">Velocity</th><th class="num">Sentiment</th>
+      {% for r in ['North', 'South', 'East', 'West'] %}<th class="num">{{ r }}</th>{% endfor %}
+      {% for t in TIERS %}<th class="num" title="{{ TIER_REACH[t] }}">{{ t }}</th>{% endfor %}<th>Reading</th></tr></thead>
+    <tbody>{% for r in d.table %}
+      <tr><td><b>{{ SKU_NAMES[r.sku] }}</b></td><td class="num">{{ '%.0f'|format(r.per_day) }}</td>
+        <td class="num"><b style="color:{{ 'var(--danger)' if r.velocity and r.velocity >= ctl['f24'] else 'inherit' }}">{{ ('%.1fx'|format(r.velocity)) if r.velocity else '–' }}</b></td>
+        <td class="num" style="color:{{ 'var(--danger)' if r.sentiment < -0.2 else 'inherit' }}">{{ '%+.2f'|format(r.sentiment) }}</td>
+        {% for g in ['North', 'South', 'East', 'West'] %}<td class="num small">{{ ('%.1f'|format(r.region_v[g])) if r.region_v[g] else '–' }}</td>{% endfor %}
+        {% for t in TIERS %}<td class="num small">{{ ('%.1f'|format(r.tier_v[t])) if r.tier_v[t] else '–' }}</td>{% endfor %}
+        <td><span class="tag {{ 'hot' if r.cls == 'Availability complaints' else ('warm' if r.cls in ('Influencer burst', 'Organic buzz', 'Competitor chatter') else 'muted') }}">{{ r.cls }}</span></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  <div class="hint">Velocity = 7-day mean ÷ the 28-day mean before it. Region and tier columns are the same ratio within each slice. Reach tiers: nano under 10k followers,
+    micro 10k–100k, macro 100k–1M, mega over 1M. Readings: availability complaints (negative and about stock), competitor chatter, influencer burst
+    (macro + mega ≥ {{ '%.0f'|format(ctl['f27'] * 100) }}%, f27), launch buzz, organic buzz. {{ ui.src('Assumed', 'A36') }}</div>
+</div>
+
+{% for c in d.alerts %}
+<div class="card">
+  <h2>{{ SKU_NAMES[c.sku] }} · {{ c.cls }} {{ ui.src('Simulated') }}</h2>
+  <div class="kv">
+    <dt>Velocity</dt><dd>{{ ('%.1fx'|format(c.velocity)) if c.velocity else '–' }} · sentiment {{ '%+.2f'|format(c.sentiment) }} · macro + mega {{ '%.0f'|format(c.big * 100) }}%{% if c.top_region %} · most in {{ c.top_region }}{% endif %}</dd>
+    <dt>QC check</dt><dd>{% if c.confirmed %}<span class="tag cold">{{ c.verdict }}</span>{% else %}<span class="tag warm">{{ c.verdict }}</span>{% endif %}</dd>
+    <dt>Proposed action</dt><dd>{{ c.action }}</dd>
+  </div>
+  {% if c.scenarios %}
+    <div class="scroll-x mt12"><table class="tbl">
+      <thead><tr><th>If QC demand…</th><th class="num">Extra bottles</th><th>Lever threatened</th><th class="num">Warning time</th>
+        {% for l in c.scenarios[0].levers %}<th class="num small">{{ l.lever }} ({{ l.response|int }} d)</th>{% endfor %}</tr></thead>
+      <tbody>{% for sc in c.scenarios %}<tr><td><b>{{ sc.name }}</b></td><td class="num">{{ sc.extra|bottles }}</td>
+        <td class="small">{% for h in sc.hit %}{{ h.ing }} unsafe {{ h.day|day }}{{ '; ' if not loop.last }}{% else %}{% if sc.cap_from %}plant capacity from {{ sc.cap_from|day }}{% else %}none in the horizon{% endif %}{% endfor %}</td>
+        <td class="num">{{ (sc.warning|string ~ ' d') if sc.warning is not none else '–' }}</td>
+        {% for l in sc.levers %}<td class="num">{% if sc.warning is none %}<span class="muted">–</span>{% elif l.in_time %}<span class="tag cold">in time</span>{% else %}<span class="tag hot">too late</span>{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table></div>
+    <div class="hint">Scenarios use the quick-commerce multiplier, never the social velocity.</div>
+  {% else %}
+    <div class="hint">No demand scenario: the rise is not confirmed in quick-commerce sell-through, so there is nothing to size.</div>
+  {% endif %}
+  {{ ui.review_form(dict(id=c.id, title='Social ' ~ c.sku ~ ' ' ~ c.cls, owner='Marketing', status=c.status, decision=c.decision), back) }}
+</div>
+{% else %}
+<div class="placeholder"><b>No social signal needs verifying this week.</b></div>
+{% endfor %}
+{% endif %}
+
+<div class="card">
+  <h2>How the simulated feed was built</h2>
+  <div class="small" style="line-height:1.6">Seeded (2026) Poisson counts by day × flavor × region × tier, scaled by the season. Events are placed only where the case says something happened:
+    Dragon Passion launch buzz (F51), the influencer reel two weeks later (F52), stock-out complaints for PP and DP during the May closure (F43, F59), rival-launch chatter (F62),
+    and one synthetic false alarm (a Guava Chilli meme in February that never reaches sales) to test the verify rule. The hidden test data is never read.</div>
+</div>
+{% endblock %}

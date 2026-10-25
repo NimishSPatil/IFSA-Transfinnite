@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Co-packer · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() %}
+{% set e = cp.econ %}
+
+<h1>Co-packer</h1>
+<p class="sub">The co-packer can add up to {{ '%.0f'|format(ctl['d08'] * 100) }}% volume at a {{ '%.0f'|format(ctl['d07'] * 100) }}% cost premium with {{ ctl['d09']|int }} days' notice
+  {{ ui.src('Given', 'F20–F22') }}. The rule below decides whether calling it is even on the table; a person decides whether to call it.</p>
+{{ ui.scen_banner() }}
+
+<div class="stats">
+  <div class="stat {% if cp.eligible %}warn{% else %}{% endif %}">
+    <div class="v">{{ 'Eligible' if cp.eligible else 'Not eligible' }}</div>
+    <div class="k">For {{ cp.start|day }} – {{ cp.end|day }}</div>
+    <div class="d">the first fortnight it could run after {{ ctl['d09']|int }} days' notice</div>
+  </div>
+  <div class="stat"><div class="v">{{ cp.tot2|bottles }}</div><div class="k">Forecast, P{{ ctl['f04']|int }} {{ ui.src('Derived', 'f04') }}</div><div class="d">vs plant maximum {{ cp.plant2|bottles }}</div></div>
+  <div class="stat"><div class="v">₹{{ '%.2f'|format(e.premium_per_bottle) }}</div><div class="k">Premium per bottle {{ ui.tagd(ctl.tag('d07', 'd05', 'd06')) }}</div>
+    <div class="d">{{ '%.0f'|format(ctl['d07'] * 100) }}% × unit cost ₹{{ '%.2f'|format(ctl['d05'] * (1 - ctl['d06'])) }}</div></div>
+  <div class="stat"><div class="v">₹{{ '%.2f'|format(e.net_per_bottle) }}</div><div class="k">Contribution left per bottle {{ ui.tagd(ctl.tag('d05', 'd06', 'd07')) }}</div>
+    <div class="d">₹{{ '%.2f'|format(e.contribution) }} − ₹{{ '%.2f'|format(e.premium_per_bottle) }}; uniform proxy</div></div>
+</div>
+
+<div class="card">
+  <h2>The rule: all three must hold</h2>
+  <table class="tbl">
+    <thead><tr><th>Check</th><th>Result</th><th>Detail</th><th>Source</th></tr></thead>
+    <tbody>{% for c in cp.checks %}
+      <tr><td><b>{{ c.rule }}</b></td>
+        <td>{% if c.ok is none %}<span class="tag muted">not tested</span>{% elif c.ok %}<span class="tag cold">pass</span>{% else %}<span class="tag hot">fail</span>{% endif %}</td>
+        <td class="small">{{ c.detail }}</td><td class="small muted">{{ c.tag }}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  {% if not cp.eligible %}
+    <div class="banner warn mt12"><b>Not eligible.</b> {{ cp.reasons|join(' ') }}</div>
+  {% endif %}
+  <div class="hint">Below the combined plants' maximum the co-packer is blocked: the plants can make it, and every co-packed bottle costs ₹{{ '%.2f'|format(e.premium_per_bottle) }} more.
+    The pulp check matters because the co-packer bottles the same scarce pulp (risk R25). What "10%" is 10% of is not stated (G12); here it is 10% of plant volume.</div>
+</div>
+
+{% if cp.eligible %}
+<div class="card">
+  <h2>If called: economics for {{ cp.volume|bottles }} bottles</h2>
+  <div class="kv">
+    <dt>Volume</dt><dd>{{ cp.volume|bottles }} {% if cp.capped %}<span class="tag warm">capped at {{ '%.0f'|format(ctl['d08'] * 100) }}%</span>{% endif %}</dd>
+    <dt>Premium</dt><dd>{{ e.premium_total|inr }}</dd>
+    <dt>Contribution on those bottles</dt><dd>{{ e.contribution_total|inr }} (uniform ₹{{ '%.2f'|format(e.contribution) }} proxy)</dd>
+    <dt>Net</dt><dd><b>{{ e.net_total|inr }}</b> — an exposure estimate, not a saving</dd>
+  </div>
+  {{ ui.review_form(cp.rec, '/copacker' ~ q) }}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Co-packer volume on record · 26 weeks</h2>
+  {% if use|sum > 0 %}{{ charts.stacked_weeks(hist_w, {'co-packer': use}, {'co-packer': '#2251FF'})|safe }}
+  {% else %}<div class="placeholder">No co-packer volume in the 26 weeks to {{ week|day }}.</div>{% endif %}
+  <div class="hint">Bottles per week from the sample's production table. The case does not say whether the co-packer was used last summer (G19).</div>
+</div>
+{% endblock %}

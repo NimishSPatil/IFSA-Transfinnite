@@ -1,0 +1,6 @@
+﻿flavor_id,name,summer_share,shelf_life_days,is_new,data_source,case_fact_id
+MPB,Mango Peach Basil,0.38,90,N,Given,F09;F38
+GC,Guava Chilli,0.2,90,N,Given,F10;F38
+PP,Passionfruit Punch,0.16,90,N,Given,F11;F38
+DB,Dragonfruit Bloom,0.14,90,N,Given,F12;F38
+DP,Dragon Passion,0.12,90,Y,Given,F13;F38

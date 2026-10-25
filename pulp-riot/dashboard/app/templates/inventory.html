@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Inventory · PulpSense{% endblock %}
+{% block content %}
+{% set k = v.kpi %}
+{% set q = '?asof=' ~ week.isoformat() %}
+{% set LABEL = {'out': 'Stock-out', 'critical': 'Under 7 days', 'low': 'Low (under %d days)'|format((0.75 * v.target)|round|int), 'ok': 'On target',
+                'over': 'Overstock (over %d days)'|format((1.5 * v.target)|round|int), 'missing': 'No report'} %}
+{% set CELL = {'out': ('#7f1d1d', '#fff'), 'critical': ('#fee2e2', '#b91c1c'), 'low': ('#fef3c7', '#b45309'),
+               'ok': ('#EAF0FF', '#051C2C'), 'over': ('#ede9fe', '#6d28d9'), 'missing': ('#f1f3f8', '#94a3b8')} %}
+
+<h1>Inventory</h1>
+<p class="sub">Finished stock at the nine depots: how many days it lasts, how old it is, and what was lost or written off — week of {{ week.strftime('%d %B %Y') }}.</p>
+<div class="banner info"><b>Inventory module is live.</b> This page is the descriptive view from the v2 CSVs. Depot decisions are in the module:
+  <a href="/rebalance?asof={{ week.isoformat() }}">Rebalancing</a> · <a href="/link?asof={{ week.isoformat() }}">Supply ↔ Inventory</a> ·
+  <a href="/overstock?asof={{ week.isoformat() }}">Overstock &amp; aging</a> · <a href="/fcsource?asof={{ week.isoformat() }}">Forecast source</a>.</div>
+
+<div class="stats">
+  <div class="stat {% if k.below7 %}alert{% endif %}">
+    <div class="v">{{ '%.0f'|format(k.median) }} days</div>
+    <div class="k">Median depot cover · target {{ v.target }}</div>
+    <div class="d"><b>{{ k.below7 }}</b> of {{ k.pairs }} depot × flavor under 7 days</div>
+  </div>
+  <div class="stat {% if k.stockouts %}alert{% endif %}">
+    <div class="v">{{ k.stockouts }}</div>
+    <div class="k">Depot × flavor out of stock</div>
+    <div class="d">{{ k.lost_w|bottles }} bottles ordered but not supplied this week ({{ (k.lost_w * 60)|inr }})</div>
+  </div>
+  <div class="stat {% if k.aged_share > 0.15 %}warn{% endif %}">
+    <div class="v">{{ '%.0f'|format(k.aged_share * 100) }}%</div>
+    <div class="k">Stock with under 60 days of shelf life left</div>
+    <div class="d">{{ k.aged|bottles }} bottles modern trade and quick commerce will refuse</div>
+  </div>
+  <div class="stat">
+    <div class="v">{{ k.wo_ytd|inr }}</div>
+    <div class="k">Write-offs and discounts · {{ week.year }} so far</div>
+    <div class="d">{{ k.disc_ytd|inr }} discounted · {{ k.woff_ytd|inr }} written off</div>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Days of cover · depot × flavor</h2>
+    <div class="chips" style="margin-bottom:10px">
+      <a class="chip {% if v.basis == 'forecast' %}on{% endif %}" href="{{ q }}&basis=forecast{% if v.depot %}&depot={{ v.depot }}{% endif %}">Against the forecast</a>
+      <a class="chip {% if v.basis == 'sales' %}on{% endif %}" href="{{ q }}&basis=sales{% if v.depot %}&depot={{ v.depot }}{% endif %}">Against actual sales</a>
+    </div>
+    <div class="scroll-x">
+    <table class="tbl heat">
+      <thead><tr><th>Depot</th>{% for s in v.skus %}<th class="num" title="{{ SKU_NAMES[s] }}">{{ s }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for r in v.heat %}
+        <tr>
+          <td><a href="{{ q }}&basis={{ v.basis }}&depot={{ r.depot }}"><b>{{ r.depot }}</b></a> <span class="small muted">{{ r.region }}</span></td>
+          {% for c in r.cells %}
+            {% if c %}{% set bg, fg = CELL[c.cls] %}
+            <td class="num" style="background:{{ bg }};color:{{ fg }};font-weight:700" title="{{ SKU_NAMES[c.sku] }} · {{ LABEL[c.cls] }} · {{ c.closing|bottles if c.closing == c.closing else 'no report' }} bottles">
+              {% if c.cls == 'missing' %}–{% elif c.cls == 'out' %}0{% else %}{{ '%.0f'|format(c.cover) }}{% endif %}</td>
+            {% else %}<td></td>{% endif %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="legend-inline" style="flex-wrap:wrap">
+      {% for key in ['out', 'critical', 'low', 'ok', 'over', 'missing'] %}
+        <span><span class="sw" style="background:{{ CELL[key][0] }};border:1px solid {{ CELL[key][1] }}"></span>{{ LABEL[key] }}</span>
+      {% endfor %}
+    </div>
+    <div class="hint">{% if v.basis == 'sales' %}Days of cover = closing stock ÷ average daily sales over the last 4 weeks. Where the forecast was too high, stock that looks fine against the forecast is overstock against real sales.{% else %}Days of cover = closing stock ÷ this week's P50 forecast per day (how the company measures it today).{% endif %} Click a depot for its ledger.</div>
+  </div>
+
+  <div class="card">
+    <h2>All 45 depot × flavor pairs · 26 weeks</h2>
+    {{ charts.stacked_status(v.status.weeks, v.status.series)|safe }}
+    <div class="legend-inline" style="flex-wrap:wrap">
+      {% for key in ['out', 'critical', 'low', 'ok', 'over', 'missing'] %}
+        <span><span class="sw" style="background:{{ STATUS_COLORS[key] }}"></span>{{ LABEL[key] }}</span>
+      {% endfor %}
+    </div>
+    <div class="hint">Each bar is one week. Dragon Passion adds 9 pairs from its launch in March 2026.</div>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>How old the stock is · end of week</h2>
+    <div class="bars">
+      {% for a in v.age %}
+      <div class="bar-row">
+        <div class="bl"><span>{{ SKU_NAMES[a.sku] }}</span><span class="n">{{ a.total|bottles }}</span></div>
+        <div class="bar-track" style="display:flex;height:12px">
+          {% for p in a.parts %}<div style="width:{{ p * 100 }}%;background:{{ ['#2251FF', '#d97706', '#b91c1c'][loop.index0] }}" title="{{ v.age_labels[loop.index0] }}: {{ '%.0f'|format(p * 100) }}%"></div>{% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="legend-inline" style="flex-wrap:wrap">
+      {% for l in v.age_labels %}<span><span class="sw" style="background:{{ ['#2251FF', '#d97706', '#b91c1c'][loop.index0] }}"></span>{{ l }}</span>{% endfor %}
+    </div>
+    <div class="hint">Bottled juice lasts 90 days; modern trade and quick commerce refuse stock with under 60 days left (case F38, F39), so anything older than 30 days can only go to general trade, usually at a discount.</div>
+  </div>
+
+  <div class="card">
+    <h2>Write-offs and discounts · {{ week.year }} so far</h2>
+    <div class="cols" style="gap:16px">
+      <div class="bars">
+        {% set mx = (v.wo.by_flavor|map(attribute=1)|max) or 1 %}
+        {% for s, val in v.wo.by_flavor %}
+        <div class="bar-row"><div class="bl"><span>{{ SKU_NAMES[s] }}</span><span class="n">{{ val|inr }}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ val / mx * 100 }}%;background:#7c3aed"></div></div></div>
+        {% endfor %}
+      </div>
+      <div class="bars">
+        {% set mr = (v.wo.by_region|map(attribute=1)|max) or 1 %}
+        {% for r, val in v.wo.by_region %}
+        <div class="bar-row"><div class="bl"><span>{{ r }}</span><span class="n">{{ val|inr }}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ val / mr * 100 }}%;background:#7c3aed"></div></div></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="mt12">{{ charts.money_bars(v.wo_weeks, v.wo.trend)|safe }}</div>
+    <div class="hint">Weekly cost over 26 weeks: discount given on aged stock plus product cost of stock written off.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Depot ledger · {{ v.depot }}</h2>
+  <div class="chips" style="margin-bottom:10px">
+    {% for d in v.depots %}<a class="chip {% if d == v.depot %}on{% endif %}" href="{{ q }}&depot={{ d }}">{{ d }}</a>{% endfor %}
+  </div>
+  <div class="scroll-x">
+  <table class="tbl">
+    <thead><tr><th>Flavor</th><th class="num">Opening</th><th class="num">Received</th><th class="num">Sold</th><th class="num">of which discounted</th>
+      <th class="num">Written off</th><th class="num">Closing</th><th class="num">P50 week</th><th class="num">P80 week</th><th class="num">Cover</th><th class="num">Under 60 days left</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for r in v.detail %}
+      {% set bg, fg = CELL[r.cls] %}
+      <tr>
+        <td><b>{{ SKU_NAMES[r.sku] }}</b></td>
+        <td class="num">{{ '{:,.0f}'.format(r.opening) }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.receipts) }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.sold) }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.disc) if r.disc else '–' }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.woff) if r.woff else '–' }}</td>
+        <td class="num"><b>{{ '{:,.0f}'.format(r.closing) if r.closing == r.closing else '–' }}</b></td>
+        <td class="num">{{ '{:,.0f}'.format(r.p50) }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.p80) }}</td>
+        <td class="num">{{ '%.1f'|format(r.cover) if r.cover == r.cover else '–' }}</td>
+        <td class="num">{{ '{:,.0f}'.format(r.aged) if r.aged == r.aged else '–' }}</td>
+        <td><span class="tag" style="background:{{ bg }};color:{{ fg }}">{{ LABEL[r.cls] }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="hint">P50 / P80 are the company's existing monthly forecast (last year's same month and mix), spread over the week. Reported to planning on {{ (week + (known_by - week)).strftime('%a %d %b') }}.</div>
+</div>
+
+<div class="card">
+  <h2>Data quality</h2>
+  <div class="cols">
+    <div>
+      <div class="small muted" style="font-weight:700;margin-bottom:6px">THIS WEEK</div>
+      {% if v.quality.missing %}
+        <div class="banner warn"><b>{{ v.quality.missing|join(', ') }}</b> did not send a stock report. Shown grey above; not counted in the totals.</div>
+      {% else %}
+        <div class="small">All nine depots reported.</div>
+      {% endif %}
+    </div>
+    <div>
+      <div class="small muted" style="font-weight:700;margin-bottom:6px">READINGS THAT BREAK THE LEDGER (TO DATE)</div>
+      {% for b in v.quality.breaks %}
+        <div class="small">Week of {{ b.week.strftime('%d %b %Y') }} · <b>{{ b.depot }} {{ b.sku }}</b>: closing stock {{ '{:,.0f}'.format(b.closing) }} is
+          {{ '{:,.0f}'.format(-b.gap) }} more than opening + received − sold allows</div>
+      {% else %}
+        <div class="small">None so far.</div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="hint">Plain arithmetic checks on each depot's own report: opening + received + transfers in − transfers out − sold − written off should equal closing.</div>
+</div>
+
+<div class="card" id="handoff">
+  <h2>Supply → Inventory hand-off (simple form, prompt 1)</h2>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Flavor</th><th class="num">Stock at depots</th><th class="num">Young enough for MT/QC</th><th class="num">Cover at P{{ ctl['f04']|int }}</th><th>National stock runs out (pulp-limited production)</th></tr></thead>
+    <tbody>{% for k, f in fg.items() %}<tr><td><b>{{ SKU_NAMES[k] }}</b></td><td class="num">{{ f.on_hand|bottles }}</td>
+      <td class="num">{{ '%.0f'|format(f.mtqc_share * 100) ~ '%' if f.mtqc_share is not none else '–' }}</td>
+      <td class="num">{{ '%.0f'|format(f.cover) ~ ' days' if f.cover else '–' }}</td>
+      <td>{% if s2f[k].runs_out %}<span class="tag hot">{{ s2f[k].runs_out|day }}</span>{% else %}<span class="small muted">not within {{ ctl['g06']|int }} days</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="placeholder mt12"><b>Built in prompt 2</b> on these hooks (<code>inventory_iface</code>, <code>forecast.depot_forecast</code>, <code>supply.balance</code>):
+    see <a href="/link?asof={{ week.isoformat() }}">Supply ↔ Inventory</a> for the depot-level chain with the finished-goods lag (g08).</div>
+  <div class="hint">MT/QC accept bottles with at least {{ ctl['g02']|int }} of {{ ctl['g01']|int }} days left (F38, F39). Run-out = stock + production the pulp allows − P50 demand, all depots pooled.</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+﻿node_id,name,type,region,capacity_per_month,capacity_unit,storage_type,cover_target_days,pulp_on_hand_days,single_source,data_source,case_fact_id,notes
+S_MANGO,Mango pulp processors (contracted),supplier,,,,,,,N,Given,F73,"Plural, contracted"
+S_PEACH,Peach orchards (hill-state),supplier,Hill,,,,,,N,Given,F74,Plural orchards
+S_BASIL,Basil contract farms (near plant),supplier,,,,,,,N,Given,F75,Fresh basil pressed into extract on site
+S_GUAVA1,Guava pulp supplier 1 (regional),supplier,,,,,,,N,Given,F76,One of two
+S_GUAVA2,Guava pulp supplier 2 (regional),supplier,,,,,,,N,Given,F76,One of two
+S_PASSION,Passionfruit cooperative (hill region),supplier,Hill,,,,,,Y,Given,F77;F35,"Single source, no second supplier qualified"
+S_DRAGON_DOM,Dragonfruit pulp - domestic (60%),supplier,,,,,,,N,Given,F14,
+S_DRAGON_IMP,Dragonfruit pulp - imported (40%),supplier,Overseas,,,,,,N,Given,F15,Ordered once a quarter
+P1,Plant 1,plant,,1.25,crore bottles,"cold storage (frozen pulp, up to 6 months)",,14,N,Assumed,F32;F37;F43,Capacity split equally (A01); 14 days passionfruit pulp at closure start is Given (F43)
+P2,Plant 2,plant,,1.25,crore bottles,"cold storage (frozen pulp, up to 6 months)",,14,N,Assumed,F32;F37;F43,Capacity split equally (A01)
+CP,Co-packer,copacker,,0.25,crore bottles,,,,N,Derived,F20,"10% of plant capacity (A12); +25% cost, 2 weeks' notice"
+D_N1,North depot 1,depot,North,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+D_N2,North depot 2,depot,North,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+D_S1,South depot 1,depot,South,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+D_S2,South depot 2,depot,South,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+D_E1,East depot 1,depot,East,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+D_E2,East depot 2,depot,East,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+D_W1,West depot 1,depot,West,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+D_W2,West depot 2,depot,West,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+D_W3,West depot 3,depot,West,,,ambient,21,,N,Assumed,F05;F06;F45,Region/name assumed (A03); 3 weeks cover is Given
+C_GT,General trade (distributors),channel,,,,,,,N,Given,F23,55% of summer volume; no outlet data (F70)
+C_MT,Modern trade (retailers),channel,,,,,,,N,Given,F24,25%; rejects stock under 60 days left
+C_QC,Quick commerce (dark stores),channel,,,,,,,N,Given,F25,20%; rejects stock under 60 days left; daily sell-through reports
+X_MKT,Marketing,function,,,,,,,N,Given,F29;F36,
+X_PLAN,"Planning (15 planners, spreadsheets)",function,,,,,,,N,Given,F63,
+X_PROC,Procurement,function,,,,,,,N,Given,F34,Targets set on price per kg
+X_COO,COO / S&OP,function,,,,,,,N,Given,F67;F68,Approves peak-season trade-offs

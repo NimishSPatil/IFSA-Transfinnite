@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Control panel · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() %}
+
+<h1>Control panel</h1>
+<p class="sub">Every setting the decision engine uses, with its default, range and source. Change one and every page recalculates.
+  Given values are case facts: moving one away from the case is flagged here and on READ_ME, and logged.</p>
+{{ ui.scen_banner() }}
+
+<div class="cols">
+  <div class="card">
+    <h2>Scenarios and presets</h2>
+    <table class="tbl">
+      <thead><tr><th>Scenario</th><th>As of</th><th class="num">Changes</th><th></th></tr></thead>
+      <tbody>{% for s in scens %}
+        <tr><td><b>{{ s.name }}</b>{% if s.preset %} <span class="tag muted">preset</span>{% endif %}{% if s.note %}<div class="small muted">{{ s.note }}</div>{% endif %}</td>
+          <td class="small">{{ s.asof or 'current week' }}</td><td class="num">{{ s['values']|length }}</td>
+          <td><form method="post" action="/controls/load"><input type="hidden" name="slug" value="{{ s.slug }}"><input type="hidden" name="asof" value="{{ week.isoformat() }}">
+            <button class="btn tiny {% if s.name == scen %}primary{% endif %}" type="submit">{{ 'Active' if s.name == scen else 'Load' }}</button></form></td></tr>
+      {% endfor %}</tbody>
+    </table>
+    <form class="flexrow mt12" method="post" action="/controls/save" style="flex-wrap:wrap">
+      <input type="hidden" name="asof" value="{{ week.isoformat() }}">
+      <input type="text" name="name" placeholder="Save the current settings as…" aria-label="Scenario name" style="flex:1;min-width:180px;min-height:36px;padding:6px 10px;font-size:14px">
+      <label class="small" style="margin:0;display:flex;gap:5px;align-items:center"><input type="checkbox" name="keep_week" value="1"> with this week</label>
+      <button class="btn sm" type="submit">Save</button>
+    </form>
+    <form method="post" action="/controls/reset" class="mt12"><input type="hidden" name="asof" value="{{ week.isoformat() }}">
+      <button class="btn sm danger" type="submit">Reset all to defaults</button></form>
+  </div>
+
+  <div class="card">
+    <h2>Compare two scenarios</h2>
+    <form class="flexrow" method="get" action="/controls" style="flex-wrap:wrap">
+      <input type="hidden" name="asof" value="{{ week.isoformat() }}">
+      <select name="a" aria-label="Scenario A" style="width:auto;min-height:36px;padding:5px 9px;font-size:14px">{% for s in scens %}<option value="{{ s.slug }}" {% if s.slug == a %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+      <span class="small muted">vs</span>
+      <select name="b" aria-label="Scenario B" style="width:auto;min-height:36px;padding:5px 9px;font-size:14px">{% for s in scens %}<option value="{{ s.slug }}" {% if s.slug == b or (not b and loop.index == 2) %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+      <button class="btn sm" type="submit">Compare</button>
+    </form>
+    {% if cmp %}
+    <table class="tbl mt12">
+      <thead><tr><th>Output</th><th>{{ cmp.a.name }}<div class="small muted" style="text-transform:none">as of {{ cmp.wa|day }}</div></th>
+        <th>{{ cmp.b.name }}<div class="small muted" style="text-transform:none">as of {{ cmp.wb|day }}</div></th></tr></thead>
+      <tbody>{% for k, va, vb in cmp.rows %}<tr><td>{{ k }}</td><td>{{ va }}</td><td {% if va != vb %}style="font-weight:700"{% endif %}>{{ vb }}</td></tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<div class="placeholder mt12">Pick two scenarios. Presets compare at their own replay week.</div>{% endif %}
+  </div>
+</div>
+
+<form method="post" action="/controls">
+<input type="hidden" name="asof" value="{{ week.isoformat() }}">
+{% for g, rows in groups.items() %}
+<div class="card" id="grp-{{ g }}">
+  <h2>{{ g }}) {{ GROUPS[g] }} <span class="count">{{ rows|length }}</span></h2>
+  <div class="scroll-x"><table class="tbl ctl-tbl">
+    <thead><tr><th>ID</th><th style="min-width:220px">Control</th><th>Value</th><th>Unit</th><th class="num">Default</th><th>Range</th><th>Source</th></tr></thead>
+    <tbody>{% for c in rows %}
+      {% set dep = c.moved and (c.src == 'Given' or c.anchor) %}
+      <tr id="{{ c.id }}" class="{{ 'locked' if c.locked else ('departs' if dep else ('moved' if c.moved else '')) }}">
+        <td class="ctl-id">{{ c.id|upper }}</td>
+        <td><b>{{ c.label }}</b>{% if c.note %}<div class="small muted">{{ c.note }}</div>{% endif %}
+          {% if c.locked %}<div><span class="tag muted">locked · precomputed at default assumptions</span></div>
+          {% elif dep %}<div><span class="tag hot">departs from {{ 'case' if c.src == 'Given' else 'case / file default' }}</span></div>{% elif c.moved %}<div><span class="tag warm">changed</span></div>{% endif %}</td>
+        <td>{% if c.locked %}
+              <input type="number" value="{{ fmt(c, c.default) }}" disabled aria-label="{{ c.label }} (locked)" title="Needs a re-run of the teammate's offline optimiser">
+            {% elif c.kind == 'select' %}
+              <select name="{{ c.id }}" aria-label="{{ c.label }}">{% for o in c.options %}<option {% if o == c.value %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            {% else %}
+              <input type="number" name="{{ c.id }}" value="{{ fmt(c, c.value) }}" step="{{ c.step or 'any' }}" min="{{ c.lo }}" max="{{ c.hi }}" aria-label="{{ c.label }}">
+            {% endif %}</td>
+        <td class="small muted">{{ c.unit }}</td>
+        <td class="num small">{{ fmt(c, c.default) }}</td>
+        <td class="small muted nowrap">{% if c.kind != 'select' %}{{ fmt(c, c.lo) }} – {{ fmt(c, c.hi) }}{% else %}{{ c.options|length }} options{% endif %}</td>
+        <td>{{ ui.src(c.src, c.ref) }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+</div>
+{% endfor %}
+<div class="sticky-save">
+  <input type="text" name="reason" placeholder="Why are you changing these? (logged)" aria-label="Reason" style="flex:1;min-width:200px;min-height:38px;padding:6px 10px;font-size:14px">
+  <button class="btn primary sm" type="submit">Apply and recalculate</button>
+</div>
+</form>
+
+<div class="card mt12">
+  <h2>Change log <span class="count">{{ log|length }}</span></h2>
+  {% if log %}
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>When</th><th>Control</th><th>From</th><th>To</th><th>Scenario</th><th>Reason</th></tr></thead>
+    <tbody>{% for e in log %}<tr><td class="small nowrap">{{ e.ts[:16]|replace('T', ' ') }}</td>
+      <td><span class="ctl-id">{{ e.id|upper }}</span> {{ e.label }}{% if e.departs %} <span class="tag hot">departs from case</span>{% endif %}</td>
+      <td class="small">{{ e.old }}</td><td class="small"><b>{{ e.new }}</b></td><td class="small">{{ e.scenario }}</td><td class="small muted">{{ e.reason }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="small muted">No changes yet.</div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Review queue · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() %}
+
+<h1>Review queue</h1>
+<p class="sub">Every recommendation the engine makes as of {{ known_by.strftime('%d %b %Y') }}. Each needs a named role, a status and a rationale.
+  Approving records the decision; it does not place an order, change production or move stock (case F71). Peak trade-offs go to the COO (F67).</p>
+{{ ui.scen_banner() }}
+
+{% for r in recs %}
+<div class="card">
+  <h2>{{ r.title }} <span class="small muted" style="font-weight:600">· {{ r.module }}</span></h2>
+  <div class="small">{{ r.detail }} <a href="{{ r.link.split('#')[0] }}{{ q }}{% if '#' in r.link %}#{{ r.link.split('#')[1] }}{% endif %}">See the evidence</a></div>
+  {{ ui.review_form(r, '/reviews' ~ q) }}
+</div>
+{% else %}
+<div class="placeholder"><b>Nothing to review this week.</b><br>Recommendations appear when the engine finds a shortage, an eligible co-packer call, a fragile lane in season or a demand signal.</div>
+{% endfor %}
+
+<div class="card mt12">
+  <h2>Decision log <span class="count">{{ hist|length }}</span></h2>
+  {% if hist %}
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>When</th><th>Item</th><th>Status</th><th>Role</th><th>Rationale</th><th>Scenario</th></tr></thead>
+    <tbody>{% for h in hist %}<tr><td class="small nowrap">{{ h.ts[:16]|replace('T', ' ') }}</td><td class="small"><code>{{ h.rec_id }}</code><div>{{ h.title }}</div></td>
+      <td>{{ ui.status(h.status) }}</td><td class="small">{{ h.role }}</td><td class="small">{{ h.rationale }}</td><td class="small muted">{{ h.scenario }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="hint">Append-only (dashboard/state/reviews.jsonl). Nothing is ever executed from here.</div>
+  {% else %}<div class="small muted">No decisions recorded yet.</div>{% endif %}
+</div>
+{% endblock %}

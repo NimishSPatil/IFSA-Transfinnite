@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% import "_m.html" as ui with context %}
+{% block title %}Supply ↔ Inventory · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() ~ '&win=' ~ win %}
+{% set sm = L.sm %}
+
+<h1>Supply ↔ Inventory</h1>
+<p class="sub">How a pulp shortfall at the plants becomes empty depot shelves, and how empty shelves feed back to the forecast and to who gets scarce pulp.
+  Supply figures come from the risk engine (v2 CSVs); depot figures from the teammate's feed.</p>
+{{ ui.scen_banner() }}
+{{ ui.inv_tabs('link', win) }}
+{{ ui.win_chips(win, '/link') }}
+
+{# ------------------------------------------------------------ one panel #}
+<div class="card">
+  <h2>Where the loss sits · {{ sm.label }}</h2>
+  <div class="stats" style="margin-bottom:6px">
+    <div class="stat alert"><div class="v">{{ ui.cr(sm.before) }}</div><div class="k">Shortage loss before {{ ui.tagd(ctl.tag('h01', 'h02')) }}</div></div>
+    <div class="stat"><div class="v">{{ ui.cr(sm.after_total) }}</div><div class="k">After rebalancing, incl. transport</div></div>
+    <div class="stat warn"><div class="v">{{ ui.cr(sm.pp_dp) }}</div><div class="k">Residual attributable to Supply (PP + DP)</div>
+      <div class="d">{{ ui.share(sm.pp_dp_share) }} of what is left</div></div>
+    <div class="stat"><div class="v">{{ ui.cr(sm.after - sm.pp_dp) }}</div><div class="k">Residual other flavors</div></div>
+  </div>
+  <h3 class="h3">What the Supply module's mitigations would change — scenario outputs, closure replay as of {{ L.K.strftime('%d %b %Y') }}</h3>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Scenario (current Control Panel settings)</th><th class="num">PP + DB + DP bottles not made, {{ ctl['g06']|int }} days</th><th class="num">vs no action</th>
+      <th class="num">At the shortage rate (₹{{ '%.2f'|format(L.rate) }}/bottle)</th></tr></thead>
+    <tbody>{% for x in L.scen %}<tr {% if loop.first %}class="win"{% endif %}><td><b>{{ x.name }}</b></td><td class="num">{{ x.unmet|bottles if x.unmet is not none else '–' }}</td>
+      <td class="num">{{ ('−' ~ (x.delta|bottles)) if x.delta else '–' }}</td><td class="num">{{ ui.cr(x.exposure) }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="hint">Scenario outputs only, not avoided savings. The two sides measure different things: the supply rows count bottles the plants could not make
+    over {{ ctl['g06']|int }} days from 11 May; the loss above counts closing stock below P50/P80 week by week. Pre-positioning lifts passionfruit cover to
+    {{ (ctl['b02'] + ctl['g05'])|int }} days (b02 + g05) at the start of the closure; the joint allocation is the linear program on the risk engine.</div>
+</div>
+
+{# ------------------------------------------------------------ supply -> inventory #}
+<div class="card">
+  <h2>Supply → Inventory · pulp shortfall to production to depot cover</h2>
+  <div class="cols">
+    <div>
+      <div class="small muted" style="font-weight:700;margin-bottom:4px">AS IT HAPPENED (weekly data)</div>
+      {{ charts.lines(L.tl|map(attribute='week')|list, {'Passionfruit at plants (days)': L.tl|map(attribute='pulp_cover')|list,
+          'PP depot cover (days)': L.tl|map(attribute='PP')|map(attribute='cover')|list, 'DP depot cover (days)': L.tl|map(attribute='DP')|map(attribute='cover')|list},
+          {'Passionfruit at plants (days)': '#051C2C', 'PP depot cover (days)': '#2251FF', 'DP depot cover (days)': '#00A9F4'}, zero=True, w=600)|safe }}
+      <div class="legend-inline" style="flex-wrap:wrap"><span><span class="sw" style="background:#051C2C"></span>Passionfruit at plants</span>
+        <span><span class="sw" style="background:#2251FF"></span>PP at depots</span><span><span class="sw" style="background:#00A9F4"></span>DP at depots</span><span class="muted">days of cover</span></div>
+    </div>
+    <div>
+      <div class="small muted" style="font-weight:700;margin-bottom:4px">SCENARIO: national depot stock with a {{ L.lag }}-day finished-goods lag (g08)</div>
+      {{ charts.lines(L.days, {'PP': L.proj.PP.level, 'DP': L.proj.DP.level}, {'PP': '#2251FF', 'DP': '#00A9F4'}, unit=1e5, fmt='{:g}L', zero=True, w=600,
+          hlines=[(0, 'empty shelves', '#b91c1c')], xfmt='%d %b')|safe }}
+      <div class="legend-inline"><span><span class="sw" style="background:#2251FF"></span>PP</span><span><span class="sw" style="background:#00A9F4"></span>DP</span><span class="muted">lakh bottles, all depots pooled</span></div>
+    </div>
+  </div>
+  <div class="scroll-x mt12"><table class="tbl">
+    <thead><tr><th>Week of</th><th class="num">Passionfruit at plants</th><th class="num">PP made / asked</th><th class="num">PP depot stock</th><th class="num">PP cover</th>
+      <th class="num">DP made / asked</th><th class="num">DP depot stock</th><th class="num">DP cover</th></tr></thead>
+    <tbody>{% for r in L.tl %}<tr {% if r.week == L.pp_cut or r.week == L.pp_zero %}class="win"{% endif %}><td>{{ r.week|day }}</td>
+      <td class="num">{{ '%.0f d'|format(r.pulp_cover) if r.pulp_cover == r.pulp_cover else '–' }}</td>
+      <td class="num">{{ '%.0f%%'|format(100 * r.PP.fill) if r.PP.fill is not none else '–' }}</td><td class="num">{{ r.PP.stock|bottles }}</td>
+      <td class="num">{{ '%.0f'|format(r.PP.cover) if r.PP.cover is not none else '–' }}</td>
+      <td class="num">{{ '%.0f%%'|format(100 * r.DP.fill) if r.DP.fill is not none else '–' }}</td><td class="num">{{ r.DP.stock|bottles }}</td>
+      <td class="num">{{ '%.0f'|format(r.DP.cover) if r.DP.cover is not none else '–' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="small mt12"><b>Reading it:</b> plant passionfruit never runs dry in the data (lowest {{ '%.0f'|format(L.tl|map(attribute='pulp_cover')|min) }} days);
+    PP production falls below half of what depots asked from the week of <b>{{ L.pp_cut|day }}</b> (the case's PP cut, F58), and national PP depot stock reaches
+    zero in the week of <b>{{ L.pp_zero|day }}</b> — two weeks later. In the scenario, the engine's pulp-limited production reaches the shelves after {{ L.lag }} days:
+    PP national stock runs out <b>{{ L.proj.PP.runs_out|day if L.proj.PP.runs_out else 'not in the horizon' }}</b>, DP
+    <b>{{ L.proj.DP.runs_out|day if L.proj.DP.runs_out else 'not in the horizon' }}</b> (DP depots were already near zero: {{ L.proj.DP.fg0|bottles }} on {{ L.W0|day }}).
+    Move b02 (closure length), e03 (cover target), b09 (pulp held) or g08 (lag) on the Control Panel to see the chain respond.</div>
+</div>
+
+{# ------------------------------------------------------------ inventory -> supply #}
+<div class="card">
+  <h2>Inventory → Supply · empty shelves as signals · {{ sm.label }}</h2>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Week of</th>{% for k in ['PP', 'DB', 'DP'] %}<th class="num">{{ k }} cover</th><th class="num">depots at zero</th>{% endfor %}<th>Pulp priority (lowest cover first)</th></tr></thead>
+    <tbody>{% for r in L.sig %}<tr><td>{{ r.week|day }}</td>
+      {% for k in ['PP', 'DB', 'DP'] %}<td class="num" style="{{ 'color:var(--danger);font-weight:700' if r[k].cover is not none and r[k].cover < 1 }}">{{ '%.1f'|format(r[k].cover) if r[k].cover is not none else '–' }}</td>
+        <td class="num">{{ r[k].zero or '' }}</td>{% endfor %}
+      <td class="small">{{ r.priority|join(' → ') }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="small mt12"><b>To the forecast detector:</b> {{ L.censored }} depot-weeks in this window sit at zero stock. Their sales are censored, so the detector
+    treats those days as unobservable rather than as falling demand (Forecast &amp; signals, replay of the May stock-outs).
+    <b>To pulp allocation:</b> DP national cover is below one day in {{ L.dp_zero|length }} week(s){% if L.dp_zero %}, from {{ L.dp_zero[0]|day }}{% endif %} — a signal
+    to give DP a service floor in the joint allocation (g07) rather than letting PP take the passionfruit. Signals only: nothing changes priorities automatically.</div>
+</div>
+
+{# ------------------------------------------------------------ gating #}
+<div class="card">
+  <h2>Demand-gated production reallocation check</h2>
+  {% if L.gate %}
+  <table class="tbl"><thead><tr><th>Flavor made more of (joint allocation vs no action)</th><th class="num">Extra bottles</th><th class="num">Depot demand can absorb in {{ L.gate[0].shelf }} days on the shelf</th><th>Gate</th></tr></thead>
+    <tbody>{% for g in L.gate %}<tr><td><b>{{ SKU_NAMES[g.sku] }}</b></td><td class="num">{{ g.extra|bottles }}</td><td class="num">{{ g.backed|bottles }} ({{ '%.0f'|format(100 * g.share) }}%)</td>
+      <td>{% if g.ok %}<span class="tag cold">passes</span>{% else %}<span class="tag hot">fails: only partly demand-backed</span>{% endif %}</td></tr>{% endfor %}</tbody></table>
+  {% else %}<div class="placeholder">No reallocation in the current scenario.</div>{% endif %}
+  <div class="hint">Extra production of a flavor counts only if depot-level demand (depot forecast with shrinkage shares) can take it within the saleable window:
+    bottles last {{ ctl['g01']|int }} days and MT/QC reject them under {{ ctl['g02']|int }} days left, so about {{ (ctl['g01'] - ctl['g02'])|int }} saleable days after
+    production (C14), less the {{ L.lag }}-day lag to the shelf, net of stock already at each depot.</div>
+</div>
+{% endblock %}

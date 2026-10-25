@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Data &amp; assumptions · PulpSense{% endblock %}
+{% block content %}
+{% set q = '?asof=' ~ week.isoformat() %}
+{% set SRC_TAG = {'Given': 'cold', 'Derived': 'muted', 'Assumed': 'warm', 'Calibrated': 'hot'} %}
+
+<h1>Data &amp; assumptions</h1>
+<p class="sub">Where every number on this dashboard comes from, what is a case fact and what is our assumption, and how the "As of" week works.</p>
+
+<div class="banner info">
+  <b>The case provides no dataset.</b> Everything here is sample data built from a week-by-week simulation of Pulp Riot (January 2024 to July 2026),
+  tuned so that last summer reproduces every figure in the case. It shows how the network behaves; it is not company data.
+</div>
+
+<div class="stats">
+  <div class="stat good"><div class="v">{{ v.n_pass }} / {{ v.n_checks }}</div><div class="k">Case figures reproduced</div><div class="d">Checked every time the data is rebuilt</div></div>
+  <div class="stat"><div class="v">{{ v.counts.get('Given', 0) }}</div><div class="k">Settings that are case facts</div><div class="d">Stated in the case, with fact numbers</div></div>
+  <div class="stat warn"><div class="v">{{ v.counts.get('Assumed', 0) }}</div><div class="k">Settings we assumed</div><div class="d">Each with its reason</div></div>
+  <div class="stat"><div class="v">{{ v.counts.get('Calibrated', 0) }}</div><div class="k">Settings tuned to the case</div><div class="d">Adjusted until the case figures match</div></div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>The case figures the data must reproduce</h2>
+    <div class="scroll-x">
+    <table class="tbl">
+      <thead><tr><th>Check</th><th class="num">Data</th><th class="num">Case</th><th></th></tr></thead>
+      <tbody>
+      {% for c in v.checks %}
+        <tr><td>{{ c.check }}</td>
+          <td class="num">{{ '{:,.4g}'.format(c.value) }}</td>
+          <td class="num">{{ c.target }}</td>
+          <td>{% if c.status == 'pass' %}<span class="tag cold">pass</span>{% else %}<span class="tag hot">{{ c.status }}</span>{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="hint">From <code>data/v2/dataset_checks.csv</code>. Summer = 1 March – 30 June 2026; the ₹1,200 crore year = July 2025 – June 2026.</div>
+  </div>
+
+  <div class="card">
+    <h2>How "As of" works</h2>
+    <div class="small" style="line-height:1.6">
+      <p style="margin-top:0">Picking a week shows the network as the company could have seen it on the <b>Monday after</b> that week. Nothing later is used, so you can replay last summer week by week without hindsight.</p>
+      <ul style="padding-left:18px;margin:0">
+        <li>Depot stock, sales and write-offs: the weekly depot report, received the Monday after.</li>
+        <li>Quick-commerce sell-through: daily, the next day.</li>
+        <li>Plant pulp: the opening stock of the week; production at the end of the week.</li>
+        <li>Pulp orders: shown when placed; "received" only once they arrive.</li>
+        <li>Highway closures: only once they have started.</li>
+      </ul>
+      <p>The dashboard assumes depot reports reach Planning weekly. Today the case says Planning gets consolidated sales only at month-end; the Demand page shows that gap.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Every setting, and where it comes from</h2>
+  <div class="chips" style="margin-bottom:10px">
+    {% for s in ['all', 'Given', 'Derived', 'Assumed', 'Calibrated'] %}
+      <a class="chip {% if v.src == s %}on{% endif %}" href="{{ q }}&src={{ s }}">{{ 'All' if s == 'all' else s }}{% if s != 'all' %} · {{ v.counts.get(s, 0) }}{% endif %}</a>
+    {% endfor %}
+  </div>
+  <div class="scroll-x">
+  <table class="tbl">
+    <thead><tr><th>Setting</th><th>Value</th><th>Unit</th><th>Source</th><th>Why</th></tr></thead>
+    <tbody>
+    {% for p in v.params %}
+      <tr><td><b>{{ p.parameter|replace('_', ' ') }}</b></td><td class="mono">{{ p.value }}</td><td class="small muted">{{ p.unit }}</td>
+        <td><span class="tag {{ SRC_TAG.get(p.group, 'muted') }}">{{ p.data_source }}</span></td><td class="small">{{ p.reason }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="hint">Given = stated in the case (F-numbers refer to the case fact register). Derived = calculated from case figures. Assumed = our judgement. Calibrated = tuned so the data reproduces the case.</div>
+</div>
+
+<div class="card" id="sources">
+  <h2>Which source feeds which panel</h2>
+  <div class="scroll-x"><table class="tbl">
+    <thead><tr><th>Source</th><th>Feeds</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><b>Dataset v2 CSVs</b> <code>data/v2/</code></td><td>Overview, Demand, Supply, Inventory (descriptive), Distribution, Transportation, Supply risk engine,
+        Forecast &amp; signals, Co-packer, Social desk, the Supply side of Supply ↔ Inventory</td><td>Case-calibrated; reproduces every case figure (checks above)</td></tr>
+      <tr><td><b>Teammate's rebalancing feed</b> <code>data/inventory_feed/dashboard_data.json</code></td><td>Rebalancing, the depot side of Supply ↔ Inventory,
+        Overstock &amp; aging, the file P50/P80 on Forecast source, risks R28–R31</td><td>The Inventory module's data source. Its weekly rows are v2's inventory
+        (same receipts and P50; closing within 1 bottle), replayed with 113 precomputed transfers</td></tr>
+      <tr><td><b>Dashboard forecast (prompt 1)</b></td><td>Forecast &amp; signals; Forecast source (side by side); inventory loss and cover only if f28 = dashboard</td>
+        <td>Rebuilt weekly from what was known the Monday before</td></tr>
+      <tr><td><b>Simulated social feed</b></td><td>Social signal desk only</td><td>No social-listening data exists (G35)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="hint"><code>dashboard_data_1.js</code> (window.DASHBOARD_DATA) is kept beside the JSON; its payload is identical, and this server reads the JSON.</div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h2>Tables behind the dashboard</h2>
+    <div class="scroll-x">
+    <table class="tbl">
+      <thead><tr><th>Table</th><th class="num">Rows</th><th>Grain</th><th>When it is known</th><th>Used on</th></tr></thead>
+      <tbody>
+      {% for t in v.tables %}
+        <tr><td class="mono"><b>{{ t.name }}</b></td><td class="num">{{ '{:,}'.format(t.rows) }}</td><td class="small">{{ t.grain }}</td>
+          <td class="small">{{ t.seen }}</td><td class="small muted">{{ t.used }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="hint">All in <code>data/v2/</code>. The answer key for planted test events (<code>data/v2/_hidden/</code>) is never read by the dashboard.</div>
+  </div>
+
+  <div class="card">
+    <h2>Data quality to date</h2>
+    <div class="small muted" style="font-weight:700;margin-bottom:6px">DEPOT REPORTS NOT RECEIVED</div>
+    {% for m in v.missing %}<div class="small">Week of {{ m.week_start.strftime('%d %b %Y') }} · <b>{{ m.depot_id }}</b></div>
+    {% else %}<div class="small">None so far.</div>{% endfor %}
+    <div class="small muted" style="font-weight:700;margin:14px 0 6px">READINGS THAT BREAK THE STOCK LEDGER</div>
+    {% for b in v.breaks %}<div class="small">Week of {{ b.week_start.strftime('%d %b %Y') }} · <b>{{ b.depot_id }} {{ b.sku_id }}</b>: closing {{ '{:,.0f}'.format(b.closing_stock) }}, {{ '{:,.0f}'.format(-b.ledger_gap) }} more than the ledger allows</div>
+    {% else %}<div class="small">None so far.</div>{% endfor %}
+    <div class="hint">Shown, not corrected: the dashboard leaves source data untouched and excludes missing reports from totals.</div>
+  </div>
+</div>
+
+{% endblock %}
